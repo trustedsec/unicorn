@@ -1,0 +1,4 @@
+Special thanks to the following:
+
+Matthew Graeber for the powershell injection technique (http://www.exploit-monday.com/)
+Josh Kelley and David Kennedy for Defcon 18 presentation (powershell encodedcommand bypass)
