@@ -12,6 +12,8 @@
 #
 # Requirements: Need to have Metasploit installed.
 #
+# Special thanks to Matthew Graeber and Josh Kelley
+#
 import base64
 import re
 import subprocess
