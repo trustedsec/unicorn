@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 0.2
+~~~~~~~~~~~~~~~~
+
+* changed output name
+* added appropriate licensing
+* slimmed the powershell code and added noprofile to downgrade process
+
+~~~~~~~~~~~~~~~~
 version 0.1
 ~~~~~~~~~~~~~~~~
 
