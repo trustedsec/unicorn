@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 0.3
+~~~~~~~~~~~~~~~~
+
+* updated msfvenom to include format type and architecture to remove bug it would not generate appropriate shellcode
+
+~~~~~~~~~~~~~~~~
 version 0.2
 ~~~~~~~~~~~~~~~~
 
