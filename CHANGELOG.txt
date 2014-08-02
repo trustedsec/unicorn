@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 0.5
+~~~~~~~~~~~~~~~~
+
+* fixed hidden window command when using powershell injection
+
+~~~~~~~~~~~~~~~~
 version 0.4
 ~~~~~~~~~~~~~~~~
 
