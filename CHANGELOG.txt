@@ -1,4 +1,13 @@
 ~~~~~~~~~~~~~~~~
+version 1.0
+~~~~~~~~~~~~~~~~
+
+* incorporated new macro attack from Rik van Duijn RCX @rikduijn
+* code cleanup and fixed an issue that would not present argument values when not formatted properly
+* channeled stderr to subprocess.PIPE
+* slimmed unicorn powershell injection code about 17 bytes to compact powershell injection
+
+~~~~~~~~~~~~~~~~
 version 0.5
 ~~~~~~~~~~~~~~~~
 
