@@ -1,4 +1,15 @@
 ~~~~~~~~~~~~~~~~
+version 1.1
+~~~~~~~~~~~~~~~~
+
+* fixed autoopen from not working on some office implementations - now works on all office documents including powerpoint/word/excel
+* changed the open description to fix a typo and also make it more believable 
+* fixed spacing issues when generating macro attack
+* added instructions on when using macro on how to add the macro to an office document
+* added better description and instructions for powershell injection
+* added better description on initial loading of payload
+
+~~~~~~~~~~~~~~~~
 version 1.0
 ~~~~~~~~~~~~~~~~
 
