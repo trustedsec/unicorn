@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 1.2
+~~~~~~~~~~~~~~~~
+
+* fixed an issue where powershell injection may not work on 32 bit platforms
+* shaved command line argument down around 32 bytes
+
+~~~~~~~~~~~~~~~~
 version 1.1
 ~~~~~~~~~~~~~~~~
 
