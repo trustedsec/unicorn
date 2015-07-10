@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 1.3
+~~~~~~~~~~~~~~~~
+
+* slimmed down powershell injection code even more
+* when using windows/meterpreter/reverse_https, the option flags StagerURILength=5 StagerVerifySSLCert=false are specified in order to trim down payload. This is due to char restriction sizes when pasting into a command window. With these two settings, the codebase is slimmed down significantly and fits within the normal length 
+* added support for shikata ga nai to obfuscate shellcode prior to utf and b64encoding. Will now through off sigs if contained inside of a file.
+
+~~~~~~~~~~~~~~~~
 version 1.2
 ~~~~~~~~~~~~~~~~
 
