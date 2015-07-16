@@ -4,6 +4,7 @@ version 2.0
 
 * added brand new hta attack vector for direct web application compromise (thanks Justin Elze)
 * added brand new attack binary to cert (thanks Matthew Graeber)
+* added window.close(); after script
 
 ~~~~~~~~~~~~~~~~
 version 1.3
