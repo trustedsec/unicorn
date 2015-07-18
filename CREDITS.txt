@@ -4,3 +4,4 @@ Matthew Graeber for the powershell injection technique (http://www.exploit-monda
 Matthew Graeber for the Cert to Binary attack vector
 Josh Kelley and David Kennedy for Defcon 18 presentation (powershell encodedcommand bypass)
 Justin Elze for the HTA Attack vector
+curi0usJack for github pull requests

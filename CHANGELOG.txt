@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.1
+~~~~~~~~~~~~~~~~
+
+* added ability to import your own powershell into attacks (thanks to curi0usJack pull request)
+
+~~~~~~~~~~~~~~~~
 version 2.0
 ~~~~~~~~~~~~~~~~
 
