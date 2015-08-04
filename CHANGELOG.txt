@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.1.1
+~~~~~~~~~~~~~~~~
+
+* added --smallest flag to msfvenom generate which compacts shellcode to smaller size
+
+~~~~~~~~~~~~~~~~
 version 2.1
 ~~~~~~~~~~~~~~~~
 
