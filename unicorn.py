@@ -23,6 +23,13 @@ import sys
 import os
 import shutil
 
+class bcolors:
+        CYAN = '\033[96m'
+        BLUE = '\033[94m'
+        RED = '\033[91m'
+        BOLD = '\033[1m'
+        ENDC = '\033[0m'
+
 # display unicorn banner
 def gen_unicorn():
     print r"""
@@ -34,7 +41,7 @@ def gen_unicorn():
                                    \|\_-\___ __-_`- /-/ \.
                                   |\_-___,-\_____--/_)' ) \
                                    \ -_ /     __ \( `( __`\|
-                                   `\__|      |\)\ ) /(/|
+                                   `\__|      |"""+bcolors.RED+r"""\)\ """+bcolors.ENDC+r""") """+bcolors.RED+r"""/(/"""+bcolors.ENDC+r"""|
            ,._____.,            ',--//-|      \  |  '   /
           /     __. \,          / /,---|       \       /
          / /    _. \  \        `/`_/ _,'        |     |
