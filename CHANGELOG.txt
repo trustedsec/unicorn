@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.1.2
+~~~~~~~~~~~~~~~~
+
+* added enablestageencoding to true by default
+
+~~~~~~~~~~~~~~~~
 version 2.1.1
 ~~~~~~~~~~~~~~~~
 

