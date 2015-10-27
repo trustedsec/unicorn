@@ -149,7 +149,7 @@ The certutil attack vector was identified by Matthew Graeber (@mattifestation) w
 a binary file, move it into a base64 format and use certutil on the victim machine to convert it back to 
 a binary for you. This should work on virtually any system and allow you to transfer a binary to the victim 
 machine through a fake certificate file. To use this attack, simply place an executable in the path of 
-unicorn and run python unicorn.py <exe_name> crt in order to get the base64 output. Once thats finished, 
+unicorn and run python unicorn.py <exe_name> crt in order to get the base64 output. Once that's finished,
 go to decode_attack/ folder which contains the files. The bat file is a command that can be run in a 
 windows machine to convert it back to a binary. 
 
@@ -225,7 +225,7 @@ def genMacro(full_attack, LineLength=380):
 
     # remove trailing "_ \r\n"
     macro_str = macro_str[:-4]
-    # remove first occurence of &
+    # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
 
     # end of macro
@@ -251,7 +251,7 @@ def gen_cert_attack(filename):
         writefile("decode_attack/encoded_attack.crt", "-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----".format(data))
         print "[*] Filewrite complete, writing out decode string for you.."
         writefile("decode_attack/decode_command.bat", "certutil -decode encoded_attack.crt encoded.exe")
-        print "[*] Exported attackunder decode_attack/"
+        print "[*] Exported attack under decode_attack/"
         print "[*] There are two files, encoded_attack.crt contains your encoded data"
         print "[*] The second file, decode_command.bat will decode the cert to an executable."
     else:
@@ -309,7 +309,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
             floater = ""
             counter = 0
 
-    # heres our shellcode prepped and ready to go
+    # here's our shellcode prepped and ready to go
     shellcode = newdata[:-1]
 
     # write out rc file
