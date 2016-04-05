@@ -357,8 +357,6 @@ def gen_shellcode_attack(payload, ipaddr, port):
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1", "$" + var1).replace("$c", "$" + var2).replace("$2", "$" + var3).replace("$3", "$" + var4).replace("$x", "$" + var5)
 
-    print powershell_code
-
     return powershell_code
 
 
