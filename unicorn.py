@@ -435,6 +435,9 @@ try:
     payload = ""
     ps1path = ""
 
+	if not os.popen("msfvenom -h").read():
+		sys.exit("\nPlease install metasploit first.\n")
+
     if len(sys.argv) > 1:
         if sys.argv[1] == "--help":
             ps_help()
