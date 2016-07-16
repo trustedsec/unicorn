@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.3.3
+~~~~~~~~~~~~~~~~
+
+* most AVs were flagging on -enc instead of -EncodedCommand along with base64 would flag windows defender.. looks like this gets around it on both macro and standard ps1/encoded command params.
+
+~~~~~~~~~~~~~~~~
 version 2.3.2
 ~~~~~~~~~~~~~~~~
 

