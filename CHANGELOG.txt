@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.4.2
+~~~~~~~~~~~~~~~~
+
+* added shortened version of -window hidden to -w 1 which is shorthand for window hidden
+
+~~~~~~~~~~~~~~~~
 version 2.4.1
 ~~~~~~~~~~~~~~~~
 
