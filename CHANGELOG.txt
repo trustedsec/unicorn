@@ -1,4 +1,13 @@
 ~~~~~~~~~~~~~~~~
+version 2.4.3
+~~~~~~~~~~~~~~~~
+
+* fixed macro injection with new obfuscated method
+* added noprofile to command when using macro injection
+* changed AutoOpen to Auto_Open
+* fixed instructions to reflect
+
+~~~~~~~~~~~~~~~~
 version 2.4.2
 ~~~~~~~~~~~~~~~~
 

