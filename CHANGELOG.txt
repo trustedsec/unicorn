@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 2.5
+~~~~~~~~~~~~~~~~
+
+* complete rehaul on macro injection - adds heavy obfsucation through the entire codebase
+* changed generate_random_strings to remove any digits - this was due to macro strings not supporting numeric values.startswith()
+* code improvements and efficiency in vba code
+
+~~~~~~~~~~~~~~~~
 version 2.4.3
 ~~~~~~~~~~~~~~~~
 
