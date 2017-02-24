@@ -3,6 +3,7 @@ version 2.5.1
 ~~~~~~~~~~~~~~~~
 
 * minor string format cleanup
+* pep8 formatting
 
 ~~~~~~~~~~~~~~~~
 version 2.5
