@@ -1,4 +1,13 @@
 ~~~~~~~~~~~~~~~~
+version 2.6
+~~~~~~~~~~~~~~~~
+
+* fixed an issue when generating hta if a folder was there it would not remove properly and overwrite
+* fixed a bug introduced by new obfuscation on proper escaping of quotes
+* added new obfuscation around HTA, variable names and split up shell commands to evade detection
+* improved code base for HTA attack vector and reliability
+
+~~~~~~~~~~~~~~~~
 version 2.5.1
 ~~~~~~~~~~~~~~~~
 
