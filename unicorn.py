@@ -529,7 +529,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         print(
             "[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/.")
         print(
-            "[*] Run msfconosle -r unicorn.rc to launch listener and move index and launcher to web server.\n")
+            "[*] Run msfconsole -r unicorn.rc to launch listener and move index and launcher to web server.\n")
 
     elif attack_type == "msf":
         print("[*] Exported powershell output code to powershell_attack.txt.")
