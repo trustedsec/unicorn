@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 2.7
+~~~~~~~~~~~~~~~~
+
+* added description to macro attack for AutoOpen/Auto_Open()
+* added obfuscation for actual base64 encoded strings
+* added better randomization on variable names
+
+~~~~~~~~~~~~~~~~
 version 2.6
 ~~~~~~~~~~~~~~~~
 

