@@ -203,7 +203,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 # usage banner
 def gen_usage():
     print(
-        "-------------------- Magic Unicorn Attack Vector v2.6.1 -----------------------------")
+        "-------------------- Magic Unicorn Attack Vector v2.7.1 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print(
         "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
@@ -547,15 +547,10 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
     # Print completion messages
     if attack_type == "msf" and attack_modifier == "hta":
-<<<<<<< HEAD
         print("[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/.")
         print("[*] Run msfconsole -r unicorn.rc to launch listener and move index and launcher to web server.\n")
-=======
-        print(
-            "[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/.")
-        print(
-            "[*] Run msfconsole -r unicorn.rc to launch listener and move index and launcher to web server.\n")
->>>>>>> cb8f7c25052c0c8f807efb1fd9f78a2bb653353e
+        print("[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/.")
+        print("[*] Run msfconsole -r unicorn.rc to launch listener and move index and launcher to web server.\n")
 
     elif attack_type == "msf":
         print("[*] Exported powershell output code to powershell_attack.txt.")
