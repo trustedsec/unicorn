@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 2.7.3
+~~~~~~~~~~~~~~~~
+
+* fixed powershell injection obfuscation in macro injection - that was a pain :P
+* added bolt red to macro AutoOpen/Auto_Open difference based on version number
+* fixed powershell injection length issues by skimming down the chunking of powershell commands
+
+~~~~~~~~~~~~~~~~
 verison 2.7.2
 ~~~~~~~~~~~~~~~~
 
