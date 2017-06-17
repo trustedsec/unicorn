@@ -53,7 +53,7 @@ root@rel1k:~/Desktop# python unicorn.py
 aHR0cHM6Ly93d3cuYmluYXJ5ZGVmZW5zZS5jb20vd3AtY29udGVudC91cGxvYWRzLzIwMTcvMDUvS2VlcE1hdHRIYXBweS5qcGc=
 
                 
--------------------- Magic Unicorn Attack Vector v2.7.3 -----------------------------
+-------------------- Magic Unicorn Attack Vector -----------------------------
 
 Native x86 powershell injection attacks on any Windows platform.
 Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)
@@ -74,7 +74,6 @@ Help Menu: python unicorn.py --help
 
 ```
 
-
 ###                -----POWERSHELL ATTACK INSTRUCTIONS----
 
 Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains all
@@ -88,15 +87,21 @@ payloads.
 
 Note that you will need to have a listener enabled in order to capture the attack.
 
-
 ###                -----MACRO ATTACK INSTRUCTIONS----
 
 For the macro attack, you will need to go to File, Properties, Ribbons, and select Developer. Once you do
-that, you will have a developer tab. Create a new macro, call it AutoOpen and paste the generated code
+that, you will have a developer tab. Create a new macro, call it Auto_Open and paste the generated code
 into that. This will automatically run. Note that a message will prompt to the user saying that the file
 is corrupt and automatically close the excel document. THIS IS NORMAL BEHAVIOR! This is  tricking the
 victim to thinking the excel document is corrupted. You should get a shell through powershell injection
 after that.
+
+If you are deploying this against Office365/2016+ versions of Word you need to modify the first line of 
+the output from: Sub Auto_Open()
+ 
+To: Sub AutoOpen()
+ 
+The name of the macro itself must also be "AutoOpen" instead of the legacy "Auto_Open" naming scheme.
 
 NOTE: WHEN COPYING AND PASTING THE EXCEL, IF THERE ARE ADDITIONAL SPACES THAT ARE ADDED YOU NEED TO
 REMOVE THESE AFTER EACH OF THE POWERSHELL CODE SECTIONS UNDER VARIABLE "x" OR A SYNTAX ERROR WILL
@@ -122,6 +127,7 @@ unicorn and run python unicorn.py <exe_name> crt in order to get the base64 outp
 go to decode_attack/ folder which contains the files. The bat file is a command that can be run in a
 windows machine to convert it back to a binary.
 
+
 ###                -----Custom PS1 Attack Instructions----
 
 This attack method allows you to convert any PowerShell file (.ps1) into an encoded command or macro.
@@ -136,4 +142,6 @@ python unicorn.py myfile.ps1 macro
 python unicorn.py muahahaha.ps1 macro 500
 
 The last one will use a 500 character string instead of the default 380, resulting in less carriage returns in VBA.
+
+
 
