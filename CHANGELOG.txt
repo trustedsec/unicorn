@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.7.4
+~~~~~~~~~~~~~~~~
+
+* add a more real corrupt message from excel macro injection
+
+~~~~~~~~~~~~~~~~
 version 2.7.3
 ~~~~~~~~~~~~~~~~
 
