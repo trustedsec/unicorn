@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 2.7.5
+~~~~~~~~~~~~~~~~
+
+* fix missing powershell call (thanks matterpreter)
+* improved additional wording on error message for macros
+
+~~~~~~~~~~~~~~~~
 version 2.7.4
 ~~~~~~~~~~~~~~~~
 
