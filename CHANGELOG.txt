@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 2.8
+~~~~~~~~~~~~~~~~
+
+* shortens length and obfuscation of unicorn command
+* removed direct -ec from powershell command
+
+~~~~~~~~~~~~~~~~
 version 2.7.5
 ~~~~~~~~~~~~~~~~
 

