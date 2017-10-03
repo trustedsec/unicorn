@@ -1,4 +1,13 @@
 ~~~~~~~~~~~~~~~~
+version 2.8.2
+~~~~~~~~~~~~~~~~
+
+* added better handling of randomized variable names
+* removed an extra semicolon
+* fixed typo
+* added count length for payload to ensure payload doesn't increase past max command line length of 8191
+
+~~~~~~~~~~~~~~~~
 version 2.8.1
 ~~~~~~~~~~~~~~~~
 
