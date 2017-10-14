@@ -6,3 +6,4 @@ Josh Kelley and David Kennedy for Defcon 18 presentation (powershell encodedcomm
 Justin Elze for the HTA Attack vector
 curi0usJack for github pull requests
 Shawn Sullivan from TrustedSec for the Obfsucation Help
+Sensepost blog: https://sensepost.com/blog/2017/macro-less-code-exec-in-msword/

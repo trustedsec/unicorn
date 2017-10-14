@@ -1,4 +1,14 @@
 ~~~~~~~~~~~~~~~~
+version 2.9
+~~~~~~~~~~~~~~~~
+
+* added a sys.exit() on length amount
+* added new dde code exec through unicorn from sensepost
+* fixed some wording in help menu
+* general code cleanup
+* slimmed down command line some more with seperator reduction and variable name size length
+
+~~~~~~~~~~~~~~~~
 version 2.8.2
 ~~~~~~~~~~~~~~~~
 
@@ -6,6 +16,7 @@ version 2.8.2
 * removed an extra semicolon
 * fixed typo
 * added count length for payload to ensure payload doesn't increase past max command line length of 8191
+* fixed minor casing on Start-Sleep
 
 ~~~~~~~~~~~~~~~~
 version 2.8.1
