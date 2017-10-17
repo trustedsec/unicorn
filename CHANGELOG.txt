@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.9.2
+~~~~~~~~~~~~~~~~
+
+* fix compatibility with windows 7 - for some reason -e''c in Windows 7 breaks Unicorn whereas works fine within Windows 10
+
+~~~~~~~~~~~~~~~~
 version 2.9.1
 ~~~~~~~~~~~~~~~~
 
