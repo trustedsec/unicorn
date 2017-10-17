@@ -3,6 +3,7 @@ version 2.9.1
 ~~~~~~~~~~~~~~~~
 
 * fix typo in powershell_command
+* added better obfsucation of path and code (thanks Will)
 
 ~~~~~~~~~~~~~~~~
 version 2.9
