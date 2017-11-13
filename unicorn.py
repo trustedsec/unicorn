@@ -261,7 +261,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.9.3 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.10 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
