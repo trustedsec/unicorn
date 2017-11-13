@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 2.10
+~~~~~~~~~~~~~~~~
+
+* added IEX and formula evasion as DDE methods and split out attack vector into 3 different components
+* rewrote the download/exec payload so that it is custom shellcode that is manually patched with URL instead of metasploit one
+* numerous other enhancements and fixes
+
+~~~~~~~~~~~~~~~~
 version 2.9.3
 ~~~~~~~~~~~~~~~~
 
