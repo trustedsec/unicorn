@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 2.11
+~~~~~~~~~~~~~~~~
+
+* reduce filesize by removing shikata from encoding on payload generation
+* add lenght limit size description on error on size
+
+~~~~~~~~~~~~~~~~
 version 2.10
 ~~~~~~~~~~~~~~~~
 
