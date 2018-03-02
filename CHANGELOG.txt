@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.12
+~~~~~~~~~~~~~~~~
+
+* added better handling for stack size detection on signatures - should no longer get flagged
+
+~~~~~~~~~~~~~~~~
 version 2.11
 ~~~~~~~~~~~~~~~~
 
