@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.13
+~~~~~~~~~~~~~~~~
+
+* added switches on command lines for evasion
+
+~~~~~~~~~~~~~~~~
 version 2.12
 ~~~~~~~~~~~~~~~~
 

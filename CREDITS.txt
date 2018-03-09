@@ -9,3 +9,4 @@ Shawn Sullivan from TrustedSec for the Obfsucation Help
 Sensepost blog: https://sensepost.com/blog/2017/macro-less-code-exec-in-msword/
 Download/Exec shellcode: https://www.exploit-db.com/exploits/24318/ 
 DDE Evasion Techniques: http://staaldraad.github.io/2017/10/23/msword-field-codes/
+Daniel Bohannon for the switch commands
