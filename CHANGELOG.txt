@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 2.14
+~~~~~~~~~~~~~~~~
+
+* fix replace for /C that broke syntax for macros
+
+~~~~~~~~~~~~~~~~
 version 2.13
 ~~~~~~~~~~~~~~~~
 
