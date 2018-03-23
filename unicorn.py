@@ -439,7 +439,7 @@ def scramble_stuff():
 
 
 # generate full macro
-def generate_macro(full_attack, line_length=380):
+def generate_macro(full_attack, line_length=800):
     # randomize macro name
     macro_rand = generate_random_string(5, 10)
 
@@ -447,7 +447,7 @@ def generate_macro(full_attack, line_length=380):
     macro_str = ("Sub Auto_Open()\nDim {0}\n{1} = ".format(macro_rand, macro_rand))
 
     if line_length is None:
-        line_length_int = 380
+        line_length_int = 800
     else:
         line_length_int = int(line_length)
 

@@ -7,6 +7,7 @@ version 3.0
 * remove cmd.exe depend on WSCRIPT.Shell - not needed and increases cmd line length limit
 * added ability to use custom shellcode with cobalt strike and shellcode methods for hta
 * added ability to use custom shellcode with cobalt strike and shellcode methods for macro
+* fixed line continuation error for long payloads when using excel (can't have long strings with & plus 25)
 
 ~~~~~~~~~~~~~~~~
 version 2.14
