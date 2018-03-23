@@ -6,6 +6,7 @@ version 3.0
 * added ability to import any shellcode directly into unicorn
 * remove cmd.exe depend on WSCRIPT.Shell - not needed and increases cmd line length limit
 * added ability to use custom shellcode with cobalt strike and shellcode methods for hta
+* added ability to use custom shellcode with cobalt strike and shellcode methods for macro
 
 ~~~~~~~~~~~~~~~~
 version 2.14
