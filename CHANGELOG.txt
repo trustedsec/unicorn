@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 3.1
+~~~~~~~~~~~~~~~~
+
+* added secondary parse for older versions of cobalt strike
+* added better error handling around list index out of range
+* modified lower stack size due to powershell crashing sometimes, seems to be more stable now
+
+~~~~~~~~~~~~~~~~
 version 3.0
 ~~~~~~~~~~~~~~~~
 
