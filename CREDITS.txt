@@ -10,3 +10,4 @@ Sensepost blog: https://sensepost.com/blog/2017/macro-less-code-exec-in-msword/
 Download/Exec shellcode: https://www.exploit-db.com/exploits/24318/ 
 DDE Evasion Techniques: http://staaldraad.github.io/2017/10/23/msword-field-codes/
 Daniel Bohannon for the switch commands
+Matt Nelson (enigma0x3) for this: https://posts.specterops.io/the-tale-of-settingcontent-ms-files-f1ea253e4d39
