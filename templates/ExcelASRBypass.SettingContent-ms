@@ -4,7 +4,7 @@
     <ApplicationInformation>
       <AppID>windows.immersivecontrolpanel_cw5n1h2txyewy!microsoft.windows.immersivecontrolpanel</AppID>
       <DeepLink>C:\Program Files\Microsoft Office\root\Client\AppVLP.exe" C:\Windows\System32\cmd.exe /c calc.exe</DeepLink>
-      <Icon>%windir%\system32\control.exe</Icon>
+      <Icon>C:\windows\system32\control.exe</Icon>
     </ApplicationInformation>
     <SettingIdentity>
       <PageID></PageID>

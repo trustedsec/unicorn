@@ -3,8 +3,8 @@
   <SearchableContent xmlns="http://schemas.microsoft.com/Search/2013/SettingContent">
     <ApplicationInformation>
       <AppID>windows.immersivecontrolpanel_cw5n1h2txyewy!microsoft.windows.immersivecontrolpanel</AppID>
-      <DeepLink>%windir%\system32\REPLACECOOLSTUFFHERE</DeepLink>
-      <Icon>%windir%\system32\control.exe</Icon>
+      <DeepLink>C:\windows\system32\REPLACECOOLSTUFFHERE</DeepLink>
+      <Icon>C:\windows\system32\control.exe</Icon>
     </ApplicationInformation>
     <SettingIdentity>
       <PageID></PageID>
