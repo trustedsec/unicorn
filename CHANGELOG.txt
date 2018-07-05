@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.2
+~~~~~~~~~~~~~~~~
+
+* added new SettingContent-ms from enigma0x3 to Unicorn supports cobalt strike, metasploit, and custom shellcode
+
+~~~~~~~~~~~~~~~~
 version 3.1
 ~~~~~~~~~~~~~~~~
 

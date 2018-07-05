@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PCSettings>
+  <SearchableContent xmlns="http://schemas.microsoft.com/Search/2013/SettingContent">
+    <ApplicationInformation>
+      <AppID>windows.immersivecontrolpanel_cw5n1h2txyewy!microsoft.windows.immersivecontrolpanel</AppID>
+      <DeepLink>C:\Program Files\Microsoft Office\root\Client\AppVLP.exe" C:\Windows\System32\cmd.exe /c calc.exe</DeepLink>
+      <Icon>%windir%\system32\control.exe</Icon>
+    </ApplicationInformation>
+    <SettingIdentity>
+      <PageID></PageID>
+      <HostID>{12B1697E-D3A0-4DBC-B568-CCF64A3F934D}</HostID>
+    </SettingIdentity>
+    <SettingInformation>
+      <Description>@shell32.dll,-4161</Description>
+      <Keywords>@shell32.dll,-4161</Keywords>
+    </SettingInformation>
+  </SearchableContent>
+</PCSettings>
+	
