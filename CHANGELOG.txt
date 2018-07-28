@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 3.2.2
+~~~~~~~~~~~~~~~~
+
+* add python 3 compatibility
+* remove filewrite variable and move to function write_file for SettingContent-ms
+
+~~~~~~~~~~~~~~~~
 version 3.2.1
 ~~~~~~~~~~~~~~~~
 
