@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.2.4
+~~~~~~~~~~~~~~~~
+
+* added randomized integer lengths for dynamic byte ranges
+
+~~~~~~~~~~~~~~~~
 version 3.2.3
 ~~~~~~~~~~~~~~~~
 

