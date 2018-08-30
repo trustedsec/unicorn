@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.2.5
+~~~~~~~~~~~~~~~~
+
+* add byte splitting based on defender sigs
+
+~~~~~~~~~~~~~~~~
 version 3.2.4
 ~~~~~~~~~~~~~~~~
 
