@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.2.9
+~~~~~~~~~~~~~~~~
+
+* bugfix causing powershell to terminate
+
+~~~~~~~~~~~~~~~~
 version 3.2.8
 ~~~~~~~~~~~~~~~~
 
