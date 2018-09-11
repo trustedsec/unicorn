@@ -1,4 +1,14 @@
 ~~~~~~~~~~~~~~~~
+version 3.3
+~~~~~~~~~~~~~~~~
+
+* added back 32 bit compatibility
+* added better evasion through kernel32.dll
+* shaved shellcode size
+* move back to IntPtr, system.int32 no longer needed
+* add a variable check to ensure theres no variable name conflicts when using the powershell code
+
+~~~~~~~~~~~~~~~~
 version 3.2.10
 ~~~~~~~~~~~~~~~~
 
