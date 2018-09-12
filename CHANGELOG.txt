@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 3.3.1
+~~~~~~~~~~~~~~~~
+
+* fix bugs where vars would be overwritten
+* readd exception handling
+
+~~~~~~~~~~~~~~~~
 version 3.3
 ~~~~~~~~~~~~~~~~
 
