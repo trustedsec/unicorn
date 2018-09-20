@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.3.2
+~~~~~~~~~~~~~~~~
+
+* add double () for defender signature update
+
+~~~~~~~~~~~~~~~~
 version 3.3.1
 ~~~~~~~~~~~~~~~~
 
