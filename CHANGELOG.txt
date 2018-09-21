@@ -1,4 +1,14 @@
 ~~~~~~~~~~~~~~~~
+version 3.4
+~~~~~~~~~~~~~~~~
+
+* fix opening payload with file error by using open instead (thanks jmhickman for PR)
+* fix macro injection technique that was not spawning a child process window which would cause powershell to fail
+* fix 32 bit compatibility
+* add better randomization variable name check conflicts (.lower())
+* fix hta attack vector
+
+~~~~~~~~~~~~~~~~
 version 3.3.2
 ~~~~~~~~~~~~~~~~
 
