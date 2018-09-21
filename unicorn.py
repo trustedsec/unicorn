@@ -1225,7 +1225,7 @@ try:
         if not os.path.isfile(sys.argv[1]): 
             print("[!] File not found. Check the path and try again.")
             sys.exit()
-        payload = file(sys.argv[1], "r").read()
+        payload = open(sys.argv[1], "r").read()
 
         if attack_type == "cs":
             #if not "char buf[] =" in payload:
