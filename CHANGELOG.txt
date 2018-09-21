@@ -7,6 +7,7 @@ version 3.4
 * fix 32 bit compatibility
 * add better randomization variable name check conflicts (.lower())
 * fix hta attack vector
+* add a payload check for custom shellcode and cobalt strike to ensure its formatted properly
 
 ~~~~~~~~~~~~~~~~
 version 3.3.2
