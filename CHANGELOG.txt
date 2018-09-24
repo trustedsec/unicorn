@@ -3,6 +3,7 @@ version 3.4.1
 ~~~~~~~~~~~~~~~~
 
 * remove byte specification, not needed and shortens code base
+* fix cobalt strike hta and macro generation wording
 
 ~~~~~~~~~~~~~~~~
 version 3.4

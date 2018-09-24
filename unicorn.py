@@ -1000,12 +1000,14 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     # for cobalt strike
     if attack_type == "cs":
 
+        # generate the hta attack vector with cobalt strike
         if attack_modifier == "hta":
             gen_hta_attack(full_attack)
             cobalt_strike()
             hta_help()
+            print("[*] Exported the hta attack vector to hta_attack/. This folder contains everything you need. Enjoy!\n")
 
-        if attack_modifier == "ms":
+        elif attack_modifier == "ms":
             ms_voodoo_stuff()
             gen_hta_attack(full_attack)
             cobalt_strike()
@@ -1020,6 +1022,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             write_file("powershell_attack.txt", macro_attack)
             cobalt_strike()
             macro_help()
+            print("[*] Exported the Cobalt Strike Unicorn Attack for Macros out to powershell_attack.txt. Enjoy!\n")
 
         else:
             write_file("powershell_attack.txt", full_attack)
