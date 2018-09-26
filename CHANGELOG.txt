@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.4.2
+~~~~~~~~~~~~~~~~
+
+* remove -e''c as this breaks windows 7 compatibility, now works on win7
+
+~~~~~~~~~~~~~~~~
 version 3.4.1
 ~~~~~~~~~~~~~~~~
 
