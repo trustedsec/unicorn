@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.4.3
+~~~~~~~~~~~~~~~~
+
+* fix when liquify bytes called would not reroll variable names which could cause conflicts
+
+~~~~~~~~~~~~~~~~
 version 3.4.2
 ~~~~~~~~~~~~~~~~
 
