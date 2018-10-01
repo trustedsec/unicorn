@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.4.4
+~~~~~~~~~~~~~~~~
+
+* remove byte designation - not needed already in byte format
+
+~~~~~~~~~~~~~~~~
 version 3.4.3
 ~~~~~~~~~~~~~~~~
 
