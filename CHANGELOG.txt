@@ -1,4 +1,13 @@
 ~~~~~~~~~~~~~~~~
+version 3.4.5
+~~~~~~~~~~~~~~~~
+
+* move to while($true) instead of for loop
+* fix byte splitting for match on regular expression
+* slim down code (woot)
+* add better handling of liquify bytes
+
+~~~~~~~~~~~~~~~~
 version 3.4.4
 ~~~~~~~~~~~~~~~~
 
