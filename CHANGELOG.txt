@@ -4,6 +4,7 @@
 
 * more evasion *yawn*
 * added amsi bypass to get around completely, adds amsi flag to command line. If you are using this then the 2191 cmd prompt limit will be larger
+* added a PRINT_DECODED to unicorn.py, turn this to ON if you want to see the decoded command in its full extent
 
 ~~~~~~~~~~~~~~~~
 version 3.5
