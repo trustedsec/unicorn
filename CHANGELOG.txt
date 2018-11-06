@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+3.5.1
+~~~~~~~~~~~~~~~~
+
+* more evasion *yawn*
+* added amsi bypass to get around completely, adds amsi flag to command line. If you are using this then the 2191 cmd prompt limit will be larger
+
+~~~~~~~~~~~~~~~~
 version 3.5
 ~~~~~~~~~~~~~~~~
 
