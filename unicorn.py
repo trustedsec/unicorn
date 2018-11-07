@@ -462,7 +462,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.5.1 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.5.2 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -1303,6 +1303,7 @@ try:
             elif sys.argv[1] =="windows/download_exec":
                 attack_type = "download/exec"
                 port = "none"
+                if "macro" in sys.argv: attack_modifier = "macro"
 
             elif sys.argv[2] == "cs":
                 attack_type = "cs"
@@ -1332,7 +1333,6 @@ try:
             port = sys.argv[3]
             attack_modifier = sys.argv[4]
             ps = gen_shellcode_attack(payload, ipaddr, port)
-
 
         else:
             print("[!] Options not understood or missing. Use --help switch for assistance.")
@@ -1382,7 +1382,8 @@ try:
             if attack_type != "download/exec":
                 port = sys.argv[3]
             ipaddr = sys.argv[2]
-            attack_modifier = ""
+            if attack_modifier != "macro":
+                attack_modifier = ""
             option = None
             ps = gen_shellcode_attack(payload, ipaddr, port)
 
