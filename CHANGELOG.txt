@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 3.6
+~~~~~~~~~~~~~~~~
+
+* turn AMSI bypass to OFF by default, not needed unless you want to disable/patch in memory
+* removed liquify_bytes function for more preferred and smaller method which does replacement methods to circumvent AMSI signature providers
+
+~~~~~~~~~~~~~~~~
 version 3.5.3
 ~~~~~~~~~~~~~~~~
 
