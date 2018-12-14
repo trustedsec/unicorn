@@ -12,3 +12,4 @@ DDE Evasion Techniques: http://staaldraad.github.io/2017/10/23/msword-field-code
 Daniel Bohannon for the switch commands
 Matt Nelson (enigma0x3) for this: https://posts.specterops.io/the-tale-of-settingcontent-ms-files-f1ea253e4d39
 AMSI Bypass Technique:  https://0x00-0x00.github.io/research/2018/10/28/How-to-bypass-AMSI-and-Execute-ANY-malicious-powershell-code.html and https://www.cyberark.com/threat-research-blog/amsi-bypass-redux/
+Carlos Perez (@carlos_perez) for the PowerShell ninja knowledge
