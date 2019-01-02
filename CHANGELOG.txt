@@ -1,4 +1,13 @@
 ~~~~~~~~~~~~~~~~
+version 3.6.1
+~~~~~~~~~~~~~~~~
+
+* broke out function for parsing -f c in msfvenom so it can be used in other locations
+* shrunk payload size while enabling shikata_ga_nai for shellcode generation with unicorn by randomized special characters - shrinks payload drastically
+* added better handling for custom shellcode for metasploit
+* added ability to use custom shellcode to the custom shellcode generation for hta and macro - python unicorn.py <path_to_shellcode.txt> shellcode hta / macro / etc.
+
+~~~~~~~~~~~~~~~~
 version 3.6
 ~~~~~~~~~~~~~~~~
 

