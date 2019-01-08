@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.6.2
+~~~~~~~~~~~~~~~~
+
+* mangled VirtualAlloc for new signature updates
+
+~~~~~~~~~~~~~~~~
 version 3.6.1
 ~~~~~~~~~~~~~~~~
 
