@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.6.4
+~~~~~~~~~~~~~~~~
+
+* removed line continuation error when using macro injection
+
+~~~~~~~~~~~~~~~~
 version 3.6.3
 ~~~~~~~~~~~~~~~~
 

