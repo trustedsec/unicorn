@@ -1,4 +1,16 @@
 ~~~~~~~~~~~~~~~~
+version 3.6.6
+~~~~~~~~~~~~~~~~
+
+* added mangle word for DllImport also shortened codebase
+
+~~~~~~~~~~~~~~~~
+version 3.6.5
+~~~~~~~~~~~~~~~~
+
+* added mangle word for CreateThread
+
+~~~~~~~~~~~~~~~~
 version 3.6.4
 ~~~~~~~~~~~~~~~~
 
