@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+3.6.8
+~~~~~~~~~~~~~~~~
+
+* mangle more CreateThread upon execution
+
+~~~~~~~~~~~~~~~~
 version 3.6.7
 ~~~~~~~~~~~~~~~~
 
