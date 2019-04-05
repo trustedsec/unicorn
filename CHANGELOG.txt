@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 3.7
+~~~~~~~~~~~~~~~~
+
+* remove variable name as random string insertion for av avoidance
+* add encoding and automatic stage loading in meterpreter (will flag AV) - looks to be time-gated, just load stdapi once meterpreter loaded
+* added better evasion around sv and gv
+
+~~~~~~~~~~~~~~~~
 version 3.6.11
 ~~~~~~~~~~~~~~~~
 

