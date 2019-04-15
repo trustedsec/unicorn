@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.7.1
+~~~~~~~~~~~~~~~~
+
+* add Windows 7 support for Unicorn payload
+
+~~~~~~~~~~~~~~~~
 version 3.7
 ~~~~~~~~~~~~~~~~
 
