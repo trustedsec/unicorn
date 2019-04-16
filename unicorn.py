@@ -491,7 +491,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.7.1 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.7.2 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -600,10 +600,9 @@ def generate_macro(full_attack, line_length=50):
 
         counter = counter + 1
 
-    # remove trailing "_ \r\n"
-    #macro_str = macro_str[:-4]
-    # remove first occurrence of &
-    #macro_str = macro_str.replace("& ", "", 1)
+    # strip un-needed
+    macro_str = macro_str.replace(r's\"\"v', "sv").replace(r'e\"\"c', 'ec').replace(r'\"\"v', 'v').replace(r'g\"\"v', 'gv')
+
     macro_str = macro_str.replace('powershell /w 1 /C "', r' /w 1 /C ""')
     #macro_str = macro_str.replace('/w 1', "") # no longer needed
     macro_str = macro_str.replace("')", "')\"")
