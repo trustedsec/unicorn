@@ -1,8 +1,15 @@
 ~~~~~~~~~~~~~~~~
+version 3.7.3
+~~~~~~~~~~~~~~~~
+
+* remove stage encoding and configure meterpreter listener options for better evasion
+
+~~~~~~~~~~~~~~~~
 version 3.7.2
 ~~~~~~~~~~~~~~~~
 
 * fix macro injection escaping
+* when using smallest payload, it gets flagged - removing smallest option flag for meterpreter since we don't need it anymore due to code optimization
 
 ~~~~~~~~~~~~~~~~
 version 3.7.1
