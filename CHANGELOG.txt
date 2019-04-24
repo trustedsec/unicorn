@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.7.4
+~~~~~~~~~~~~~~~~
+
+* add randomization on byte replacing
+
+~~~~~~~~~~~~~~~~
 version 3.7.3
 ~~~~~~~~~~~~~~~~
 
