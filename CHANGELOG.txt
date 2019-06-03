@@ -1,8 +1,12 @@
 ~~~~~~~~~~~~~~~~
-version 3.7.7
+version 3.8
 ~~~~~~~~~~~~~~~~
 
 * randomize noexit
+* fix a python3 decode issue when generating meterpreter shellcode
+* fix raw_input python 3 compatibility
+* fix lambda error with python3 and decode format
+* added a check for x64 bit shellcode and automatically downgrade payload for meterpreter
 
 ~~~~~~~~~~~~~~~~
 version 3.7.6

