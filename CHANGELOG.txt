@@ -4,6 +4,7 @@ version 3.8.1
 
 * changed 32/64 bit detection method to [environment]::Is64BitOperatingSystem -eq 'True'
 * mangled true word to split it up
+* fixed an error that would cause raw_input to error out on python 2 (not 3) when using AMSI_BYPASS to ON
 
 ~~~~~~~~~~~~~~~~
 version 3.8

