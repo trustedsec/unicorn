@@ -116,7 +116,7 @@ last, the unicorn.rc file. You can run msfconsole -r unicorn.rc to launch the li
 A user must click allow and accept when using the HTA attack in order for the powershell injection to work
 properly.
 
-###                -----CERUTIL Attack Instruction----
+###                -----CERTUTIL Attack Instruction----
 
 The certutil attack vector was identified by Matthew Graeber (@mattifestation) which allows you to take
 a binary file, move it into a base64 format and use certutil on the victim machine to convert it back to
