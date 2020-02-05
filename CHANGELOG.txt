@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.8.2
+~~~~~~~~~~~~~~~~
+
+* add dllimport function type to get around signatures
+
+~~~~~~~~~~~~~~~~
 version 3.8.1
 ~~~~~~~~~~~~~~~~
 
