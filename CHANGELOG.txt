@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 3.8.3
+~~~~~~~~~~~~~~~~
+
+* reduce payload size by removing temporary replaces
+* add additional calloc/createthread changes to bypass signatures
+* remove print statement for shellcode
+
+~~~~~~~~~~~~~~~~
 version 3.8.2
 ~~~~~~~~~~~~~~~~
 
