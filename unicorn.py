@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Magic Unicorn - PowerShell downgrade attack and exploitation tool
 #
@@ -495,7 +495,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.8.4 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.8.6 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -722,7 +722,7 @@ def gen_hta_attack(command):
 def format_metasploit(data):
     # start to format this a bit to get it ready
     repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '','unsignedcharbuf[]=': ''}
-    data = data.decode()
+    #data = data.decode()
     data = reduce(lambda a, kv: a.replace(*kv),iter(repls.items()), data).rstrip()
     if len(data) < 1:
         print("[!] Critical: It does not appear that your shellcode is formatted properly. Shellcode should be in a 0x00,0x01 format or a Metasploit format.")
@@ -1351,6 +1351,6 @@ except KeyboardInterrupt:
     print("\nExiting Unicorn... May the magical unicorn force flow through you.\n")
     sys.exit()
 
-except Exception as e:
-    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
-    else: print("[!] Something went wrong, printing the error: " + str(e))
+#except Exception as e:
+#    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python unicorn.py for all usage.")
+#    else: print("[!] Something went wrong, printing the error: " + str(e))

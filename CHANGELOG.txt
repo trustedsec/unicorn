@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 3.8.6
+~~~~~~~~~~~~~~~~
+
+* fix escaping issue
+* fix decode python3 error
+
+~~~~~~~~~~~~~~~~
 version 3.8.5
 ~~~~~~~~~~~~~~~~
 
