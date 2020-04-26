@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.8.8
+~~~~~~~~~~~~~~~~ 
+
+* remove double quotes which would cause compatibility issues on prior versions of Windows 10
+
+~~~~~~~~~~~~~~~~
 version 3.8.7
 ~~~~~~~~~~~~~~~~
 

