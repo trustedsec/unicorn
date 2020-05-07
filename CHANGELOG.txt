@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 3.9
+~~~~~~~~~~~~~~~~
+
+* incorporate better disable AMSI from Rasta - already encoded to get around detection https://raw.githubusercontent.com/rasta-mouse/AmsiScanBufferBypass/master/ASBBypass.ps1
+* add better evasion
+* added bypass_amsi on by default it will now generate two stages for powershell commands, you can turn this off in the unicorn.py option AMSI_BYPASS="ON" to OFF
+
+~~~~~~~~~~~~~~~~
 version 3.8.8
 ~~~~~~~~~~~~~~~~ 
 
