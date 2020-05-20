@@ -488,7 +488,7 @@ Usage:
 
 python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
 python unicorn.py <cobalt_strike_file.cs cs ms
-python unicorn.py <patth_to_shellcode.txt>: shellcode ms
+python unicorn.py <path_to_shellcode.txt>: shellcode ms
 python unicorn.py ms
 
 """)
