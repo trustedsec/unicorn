@@ -495,7 +495,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.9 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.10 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -1123,9 +1123,10 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
                     print("[*] Windows command prompt has a character restriction of 8191 which if you are using cmd.exe as a payload delivery option, this will not work.")
                     print("[*] Turn off AMSI_BYPASS=ON in the unicorn.py file located at the very top to turn this feature off which is ON by default.")
                     print("[*] If you are calling PowerShell directly, this is not a concern.")
-                print("[!] WARNING. WARNING. Length of the payload is above command line limit length of 8191. Recommend trying to generate again or the line will be cut off.")
-                print("[!] Total Payload Length Size: " + str(len(full_attack)))
-                input("Press {return} to continue.")
+                else:
+                    print("[!] WARNING. WARNING. Length of the payload is above command line limit length of 8191. Recommend trying to generate again or the line will be cut off.")
+                    print("[!] Total Payload Length Size: " + str(len(full_attack)))
+                    input("Press {return} to continue.")
 
             # format for dde specific payload
             if attack_modifier == "dde":

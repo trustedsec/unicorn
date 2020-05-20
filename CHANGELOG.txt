@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 3.10
+~~~~~~~~~~~~~~~~
+
+* fix issue where meterpreter would not connect back as it was not specifying port properly
+* remove error message on length size when using AMSI_BYPASS=ON
+
+~~~~~~~~~~~~~~~~
 version 3.9
 ~~~~~~~~~~~~~~~~
 
