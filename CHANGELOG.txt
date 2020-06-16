@@ -1,4 +1,15 @@
 ~~~~~~~~~~~~~~~~
+version 3.11
+~~~~~~~~~~~~~~~~
+
+* fix bug on amsi bypass 
+* break av signature chain for payload
+* add better error handling 
+* break av signature for amsi bypass
+* restructure amsi bypass code
+* add automatic evasion for opcodes
+
+~~~~~~~~~~~~~~~~
 version 3.10
 ~~~~~~~~~~~~~~~~
 
