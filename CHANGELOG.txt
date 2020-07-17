@@ -1,4 +1,22 @@
 ~~~~~~~~~~~~~~~~
+version 3.12
+~~~~~~~~~~~~~~~~
+
+* fix an issue where if payload was generated, it would mess up the macro generation for AMSI_BYPASS if on
+* fix an issue in Metasploit generation payload would throw a lock file error. Updating Metasploit fixes this issue and added a prompt.
+
+~~~~~~~~~~~~~~~~
+version 3.11
+~~~~~~~~~~~~~~~~
+
+* fix bug on amsi bypass 
+* break av signature chain for payload
+* add better error handling 
+* break av signature for amsi bypass
+* restructure amsi bypass code
+* add automatic evasion for opcodes
+
+~~~~~~~~~~~~~~~~
 version 3.10
 ~~~~~~~~~~~~~~~~
 
