@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 3.13
+~~~~~~~~~~~~~~~~
+
+* better evasion for Rasta's AMSI BYPASS
+* better evasion for Unicorn payload
+
+~~~~~~~~~~~~~~~~
 version 3.12
 ~~~~~~~~~~~~~~~~
 
