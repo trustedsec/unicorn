@@ -66,7 +66,7 @@ AMSI_BYPASS="ON"
 
 # This will print out the fully decoded command for you instead of running it through the powershell obfuscated
 # code.
-PRINT_DECODED="ON"
+PRINT_DECODED="OFF"
 
 #
 # generate a random string
