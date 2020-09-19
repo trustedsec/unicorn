@@ -66,7 +66,7 @@ AMSI_BYPASS="ON"
 
 # This will print out the fully decoded command for you instead of running it through the powershell obfuscated
 # code.
-PRINT_DECODED="OFF"
+PRINT_DECODED="ON"
 
 #
 # generate a random string
@@ -1212,8 +1212,25 @@ try:
     attack_modifier = ""
     payload = ""
     ps1path = ""
-
+    
+    default_print_decoded = PRINT_DECODED
+    default_amsi_bypass = AMSI_BYPASS
+    
     if len(sys.argv) > 1:
+        print("Default settings:\n - PRINT_DECODED=%s\n - AMSI_BYPASS=%s\n" % (default_print_decoded, default_amsi_bypass))
+        user_print_decoded = input("Do you want to print the shellcode decoded or encoded? (D/E) ").lower()
+        user_amsi_bypass = input("Do you want to print the AMSI bypass shellcode? (Y/n) ").lower()
+
+        if user_print_decoded == 'd':
+            PRINT_DECODED='ON'
+        else:
+            PRINT_DECODED='OFF'
+
+        if user_amsi_bypass == 'y':
+            AMSI_BYPASS='ON'
+        else:
+            AMSI_BYPASS='OFF'
+
         if sys.argv[1] == "--help":
             ps_help()
             macro_help()
@@ -1224,6 +1241,7 @@ try:
             cobalt_strike()
             gen_usage()
             sys.exit()
+
 
         # if using a 64 bit payload then downgrade to 32 bit. The way unicorn works is by doing whats called an x86 downgrade attack so there is$
         if ("windows/x64/meterpreter") in sys.argv[1]:
