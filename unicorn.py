@@ -1212,24 +1212,19 @@ try:
     attack_modifier = ""
     payload = ""
     ps1path = ""
-    
-    default_print_decoded = PRINT_DECODED
-    default_amsi_bypass = AMSI_BYPASS
-    
+        
     if len(sys.argv) > 1:
-        print("Default settings:\n - PRINT_DECODED=%s\n - AMSI_BYPASS=%s\n" % (default_print_decoded, default_amsi_bypass))
-        user_print_decoded = input("Do you want to print the shellcode decoded or encoded? (D/E) ").lower()
-        user_amsi_bypass = input("Do you want to print the AMSI bypass shellcode? (Y/n) ").lower()
+        if "-d" in sys.argv or "--decode" in sys.argv:
+            os.system("clear")
+            gen_unicorn()
+            import base64
+            msg = "aHR0cHM6Ly93d3cudHJ1c3RlZHNlYy5jb20vd3AtY29udGVudC91cGxvYWRzLzIwMjAvMDUvc29ub2ZhLmpwZw=="
+            base64_bytes = msg.encode('ascii')
+            msg_bytes = base64.b64decode(msg)
+            msg = msg_bytes.decode('ascii')
+            print("The base64 above translates to: %s" % (ColorsEnum.RED + msg + ColorsEnum.ENDC))
+            sys.exit()
 
-        if user_print_decoded == 'd':
-            PRINT_DECODED='ON'
-        else:
-            PRINT_DECODED='OFF'
-
-        if user_amsi_bypass == 'y':
-            AMSI_BYPASS='ON'
-        else:
-            AMSI_BYPASS='OFF'
 
         if sys.argv[1] == "--help":
             ps_help()
