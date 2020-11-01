@@ -1223,7 +1223,7 @@ try:
             msg_bytes = base64.b64decode(msg)
             msg = msg_bytes.decode('ascii')
             print("The base64 above translates to: %s" % (ColorsEnum.RED + msg + ColorsEnum.ENDC))
-            sys.exit()
+            pass
 
 
         if sys.argv[1] == "--help":
