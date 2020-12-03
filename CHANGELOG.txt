@@ -1,4 +1,11 @@
 ~~~~~~~~~~~~~~~~
+version 3.14
+~~~~~~~~~~~~~~~~
+
+* slimmed down payload to allow cmdline char restrictions
+* AMSI signature bypass
+
+~~~~~~~~~~~~~~~~
 version 3.13
 ~~~~~~~~~~~~~~~~
 
