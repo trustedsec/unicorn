@@ -1218,7 +1218,48 @@ try:
     ps1path = ""
 
     if len(sys.argv) > 1:
-        if sys.argv[1] == "--help":
+        os.system("clear")
+        gen_unicorn()
+        payload_options = ["powershell","macro","hta","cert","custom","dde","cobalt","general"]
+        help_options = ["-h","--help"]
+
+        if len(sys.argv) > 2:
+            if sys.argv[2] in payload_options:
+                # Show help for specific payload options
+                if sys.argv[2] == "powershell":
+                    ps_help()
+                    gen_usage()
+                    sys.exit()
+                elif sys.argv[2] == "macro":
+                    macro_help()
+                    gen_usage()
+                    sys.exit()
+                elif sys.argv[2] == "hta":
+                    hta_help()
+                    gen_usage()
+                    sys.exit()
+                elif sys.argv[2] == "cert":
+                    cert_help()
+                    gen_usage()
+                    sys.exit()
+                elif sys.argv[2] == "custom":
+                    custom_ps1_help()
+                    custom_shellcode()
+                    gen_usage()
+                    sys.exit()
+                elif sys.argv[2] == "dde":
+                    dde_help()
+                    gen_usage()
+                    sys.exit()
+                elif sys.argv[2] == "cobalt":
+                    cobalt_strike()
+                    gen_usage()
+                    sys.exit()
+                elif sys.argv[2] == "general":
+                    gen_usage()
+                    sys.exit()
+        elif len(sys.argv) <= 2 and sys.argv[1] in help_options:
+            # Show all help menus if none specified
             ps_help()
             macro_help()
             hta_help()
