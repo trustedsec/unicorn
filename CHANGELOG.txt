@@ -1,4 +1,12 @@
 ~~~~~~~~~~~~~~~~
+version 3.15
+~~~~~~~~~~~~~~~~
+
+* AMSI signature fix 
+* added AMSI print decoded to payload output
+* AMSI bypass signature bypass
+
+~~~~~~~~~~~~~~~~
 version 3.14
 ~~~~~~~~~~~~~~~~
 
