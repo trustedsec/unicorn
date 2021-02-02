@@ -1421,6 +1421,6 @@ except KeyboardInterrupt:
     print("\nExiting Unicorn... May the magical unicorn force flow through you.\n")
     sys.exit()
 
-#except Exception as e:
-#    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python3 unicorn.py for all usage.")
-#    else: print("[!] Something went wrong, printing the error: " + str(e))
+except Exception as e:
+    if "list index" in str(e): print("[!] It appears you did not follow the right syntax for Unicorn. Try again, run python3 unicorn.py for all usage.")
+    else: print("[!] Something went wrong, printing the error: " + str(e))
