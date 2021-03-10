@@ -1,4 +1,10 @@
 ~~~~~~~~~~~~~~~~
+version 3.17
+~~~~~~~~~~~~~~~~
+
+* change AMSI bytecode for better evasion for AMSI providers
+
+~~~~~~~~~~~~~~~~
 version 3.16
 ~~~~~~~~~~~~~~~~
 
