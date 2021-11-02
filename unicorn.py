@@ -915,8 +915,10 @@ def gen_shellcode_attack(payload, ipaddr, port):
             reroll = True
         varcheck = varcheck + var19
 
-        if reroll == True: print("[*] Great Scott!! There was a variable conflict. This happens. It's OK Marty. Rerolling variable names until we get a solid set to remove conflicting names.")
-        if reroll == False: break
+        if reroll:
+            print("[*] Great Scott!! There was a variable conflict. This happens. It's OK Marty. Rerolling variable names until we get a solid set to remove conflicting names.")
+        else:
+            break
 
     # generate random service name from win32 - defender was looking from name win32 + 0x00 length inside of byte array
     randomize_service_name = generate_random_string(2,2)
