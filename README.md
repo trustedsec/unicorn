@@ -241,7 +241,7 @@ the size of 8191. This is the max command line argument size limit in Windows.
 
 Usage:
 
-    python uniocrn.py shellcode_formatted_properly.txt shellcode
+    python unicorn.py shellcode_formatted_properly.txt shellcode
 
 Next simply copy the powershell command to something you have the ability for remote command execution.
 
