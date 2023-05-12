@@ -1228,7 +1228,7 @@ try:
         help_options = ["-h","--help"]
 
         if len(sys.argv) > 2:
-            if sys.argv[2] in payload_options:
+            if sys.argv[2] in payload_options and sys.argv[1] in help_options:
                 # Show help for specific payload options
                 if sys.argv[2] == "powershell":
                     ps_help()
