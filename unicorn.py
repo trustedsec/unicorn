@@ -1234,7 +1234,7 @@ try:
                     ps_help()
                     gen_usage()
                     sys.exit()
-                elif sys.argv[2] == "macro":
+                elif sys.argv[2] == "macro" and re.search('\.ps1$', sys.argv[1]) is None: # "unicorn.py PATH.ps1 macro" not working, there's a fix
                     macro_help()
                     gen_usage()
                     sys.exit()
