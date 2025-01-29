@@ -1234,7 +1234,7 @@ try:
                     ps_help()
                     gen_usage()
                     sys.exit()
-                elif sys.argv[2] == "macro" and re.search('\.ps1$', sys.argv[1]) is None: # "unicorn.py PATH.ps1 macro" not working, there's a fix
+                elif sys.argv[2] == "macro" and re.search(r'\.ps1$', sys.argv[1]) is None: # "unicorn.py PATH.ps1 macro" not working, there's a fix
                     macro_help()
                     gen_usage()
                     sys.exit()
@@ -1287,7 +1287,7 @@ try:
             if len(sys.argv) > 2 and sys.argv[2] == "crt":
                 attack_type = "crt"
                 payload = sys.argv[1]
-            elif re.search('\.ps1$', sys.argv[1]) is not None:
+            elif re.search(r'\.ps1$', sys.argv[1]) is not None:
                 attack_type = "custom_ps1"
                 ps1path = sys.argv[1]
 
