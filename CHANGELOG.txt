@@ -1,4 +1,25 @@
 ~~~~~~~~~~~~~~~~
+version 3.19
+~~~~~~~~~~~~~~~~
+
+* run the AMSI stage and shellcode loader in one PowerShell child process
+* allocate memory from the actual shellcode length instead of a fixed random stack size
+* add --amsi, --profile, --arch, and --seed generator options
+* reject generated commands that exceed cmd.exe or PowerShell profile limits
+* add x64 PowerShell child selection and explicit architecture metadata
+* preserve x64 meterpreter payloads when --arch x64 is selected
+* write unicorn_manifest.json with reproducible variant and shellcode evidence
+* add reproducible memset and Marshal.Copy loader variants
+* fix macro VBA quoting so the generated command round-trips exactly
+* fix the loader byte prefix, thread variable, and memset import
+* fix the DDE manifest command hash to match download.ps1
+* reset custom PS1 shellcode metadata before writing unicorn_manifest.json
+* guard HTA and SettingContent output when unicorn.rc is not generated
+* parse 0xNN and Metasploit \xNN shellcode through a shared byte parser
+* update HTA output to use the single-process command
+* escape Windows path backslashes in HTA JScript output
+
+~~~~~~~~~~~~~~~~
 version 3.18
 ~~~~~~~~~~~~~~~~
 

