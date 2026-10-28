@@ -301,6 +301,8 @@ class UnicornRegressionTests(unittest.TestCase):
                 "x64",
                 "--profile",
                 "cmd",
+                "--obfuscation",
+                "high",
                 "--seed",
                 "test-seed",
             )
@@ -310,6 +312,9 @@ class UnicornRegressionTests(unittest.TestCase):
             self.assertIn(r"C:\Windows\System32\WindowsPowerShell", attack)
             self.assertEqual(manifest["variant"]["architecture"], "x64")
             self.assertEqual(manifest["variant"]["amsi_mode"], "off")
+            self.assertEqual(manifest["obfuscation"]["level"], "high")
+            self.assertIn("whitespace", manifest["obfuscation"]["transformations"])
+            self.assertIn("numeric-format", manifest["obfuscation"]["transformations"])
             self.assertEqual(manifest["variant"]["seed"], "test-seed")
             self.assertEqual(manifest["shellcode"]["bytes"], 4)
             self.assertEqual(
@@ -421,6 +426,41 @@ class UnicornRegressionTests(unittest.TestCase):
                 for value in encoded_shellcode.replace(shellcode_marker, "0x").split(",")
             )
             self.assertEqual(round_trip, bytes([0xFC, 0xE8, 0x82, 0x00]))
+
+    def test_obfuscation_profiles_preserve_shellcode_and_record_transforms(self):
+        shellcode = "0xfc,0xe8,0x82,0x00"
+        expected = bytes([0xFC, 0xE8, 0x82, 0x00])
+
+        for level in ("minimal", "moderate", "high"):
+            module = self.load_module(["unicorn.py", "--obfuscation", level])
+            with contextlib.redirect_stdout(io.StringIO()):
+                loader = module.gen_shellcode_attack(
+                    shellcode,
+                    "cobaltstrike",
+                    "cobaltstrike",
+                )
+
+            self.assertEqual(module.OBFUSCATION_LEVEL, level)
+            self.assertIn("variable-names", module.LAST_OBFUSCATION_TRANSFORMS)
+            self.assertIn("shellcode-marker", module.LAST_OBFUSCATION_TRANSFORMS)
+            self.assertIn("loader-variant", module.LAST_OBFUSCATION_TRANSFORMS)
+            if level == "minimal":
+                self.assertNotIn("import-order", module.LAST_OBFUSCATION_TRANSFORMS)
+            else:
+                self.assertIn("import-order", module.LAST_OBFUSCATION_TRANSFORMS)
+            if level == "high":
+                self.assertIn("whitespace", module.LAST_OBFUSCATION_TRANSFORMS)
+                self.assertIn("numeric-format", module.LAST_OBFUSCATION_TRANSFORMS)
+
+            shellcode_match = re.search(r'\$[A-Za-z]+="([^"]+)"', loader)
+            self.assertIsNotNone(shellcode_match, loader[:400])
+            encoded_shellcode = shellcode_match.group(1)
+            shellcode_marker = encoded_shellcode[0]
+            round_trip = bytes(
+                int(value, 16)
+                for value in encoded_shellcode.replace(shellcode_marker, "0x").split(",")
+            )
+            self.assertEqual(round_trip, expected)
 
     def test_amsi_patch_round_trips_to_expected_bytes(self):
         module = self.load_module(["unicorn.py"])

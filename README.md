@@ -91,10 +91,15 @@ Use `--profile cmd` for an 8191-character command context. Use `--profile powers
 Use `--arch x86` or `--arch x64` to select the child PowerShell architecture. Supply shellcode that
 matches that architecture. The default is x86.
 
+Use `--obfuscation minimal|moderate|high` to select a bounded, semantic-preserving variant. The
+manifest records the exact transformations used.
+
 Use `--seed <value>` to reproduce a generated variant. Each run writes `unicorn_manifest.json` with the
 seed, architecture, AMSI mode, command lengths, APIs, and source shellcode SHA-256.
 The loader variant uses either a `memset` byte-copy loop or `Marshal.Copy`; the selected API is recorded
 in the manifest.
+For shellcode attacks, the manifest also records the selected obfuscation profile and its
+transformations.
 
 ###                -----POWERSHELL ATTACK INSTRUCTIONS----
 
@@ -267,6 +272,7 @@ Usage:
     python unicorn.py shellcode_formatted_properly.txt shellcode
     python unicorn.py shellcode_formatted_properly.txt shellcode --arch x64 --profile cmd
     python unicorn.py shellcode_formatted_properly.txt shellcode --amsi off --profile cmd
+    python unicorn.py shellcode_formatted_properly.txt shellcode --obfuscation high
     python unicorn.py shellcode_formatted_properly.txt shellcode --seed test-run
 
 Next simply copy the powershell command to something you have the ability for remote command execution.

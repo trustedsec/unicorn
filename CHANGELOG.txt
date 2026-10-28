@@ -10,6 +10,7 @@ version 3.19
 * preserve x64 meterpreter payloads when --arch x64 is selected
 * write unicorn_manifest.json with reproducible variant and shellcode evidence
 * add reproducible memset and Marshal.Copy loader variants
+* add --obfuscation minimal|moderate|high with manifest transformation metadata
 * fix macro VBA quoting so the generated command round-trips exactly
 * fix the loader byte prefix, thread variable, and memset import
 * fix the DDE manifest command hash to match download.ps1
